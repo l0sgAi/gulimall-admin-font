@@ -1,8 +1,9 @@
 <template>
     <div>
         <a class="head">商品分类管理</a>
-        <el-tree style="max-width: 600px;margin-top: 12px;" :data="treeData" show-checkbox node-key="catId"
-            default-expand-all :expand-on-click-node="false" :props="defaultProps" @node-click="handleNodeClick">
+        <el-tree v-loading="loading" style="max-width: 600px;margin-top: 12px;" :data="treeData" show-checkbox
+            node-key="catId" :default-expanded-keys="expanded" :expand-on-click-node="false" :props="defaultProps"
+            @node-click="handleNodeClick">
             <template #default="{ node, data }">
                 <span class="custom-tree-node">
                     <span>{{ node.label }}</span>
@@ -21,36 +22,43 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue";
-import baseService from "@/service/baseService";
+import { onMounted, reactive, ref } from "vue"
+import baseService from "@/service/baseService"
 import type Node from 'element-plus/es/components/tree/src/model/node'
-import { ElMessage } from "element-plus"
-
+import { ElMessage, ElMessageBox } from "element-plus"
 onMounted(() => {
-    getInfo();
+    getInfo()
 });
 
 interface Tree {
+    [x: string]: any
     id: number
     label: string
     children?: Tree[]
 }
 
+const defaultProps = {
+    children: 'children',
+    label: 'name',
+}
+
+let expanded = ref<number[]>([])
 let treeData = ref<Tree[]>([])
+let loading = ref(true) // 控制加载状态的变量
 const getInfo = () => {
+    loading.value = true
     baseService.get("/product/category/page/tree").then((res) => {
         console.log("成功获取Tree data: ", res.data)
-        treeData.value = res.data;
+        treeData.value = res.data
+        loading.value = false // 数据加载完成后，关闭加载状态
+    }).catch(() => {
+        ElMessage.error("获取分类数据失败！")
+        loading.value = false // 如果请求失败，也关闭加载状态
     });
 };
 
 const handleNodeClick = (data: Tree) => {
     console.log(data)
-}
-
-const defaultProps = {
-    children: 'children',
-    label: 'name',
 }
 
 const append = (data: Tree) => {
@@ -64,12 +72,28 @@ const append = (data: Tree) => {
 }
 
 const remove = (node: Node, data: Tree) => {
-    // const parent = node.parent
-    // const children: Tree[] = parent.data.children || parent.data
-    // const index = children.findIndex((d) => d.id === data.id)
-    // children.splice(index, 1)
-    // treeData.value = [...treeData.value]
-    console.log("remove", data.label)
+    ElMessageBox.confirm(`此操作将删除【${data.name}】菜单，确定删除？`, '删除确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+    }).then(() => {
+        doRemove(node, data)
+    }).catch(() => {
+        ElMessage.info('已取消删除')
+    });
+}
+
+const doRemove = (node: Node, data: Tree) => {
+    let ids = [data.catId]
+    console.log("ids", ids)
+    baseService.delete("/product/category/delete", ids).then(() => {
+        getInfo()
+        console.log("成功删除分类数据: ", ids)
+        ElMessage.success("删除分类成功！")
+        expanded.value = [node.parent.data.catId]
+    }).catch(() => {
+        ElMessage.error("删除分类数据失败！")
+    });
 }
 </script>
 
