@@ -1,9 +1,11 @@
 <template>
     <div>
         <a class="head">商品分类管理</a>
+        <el-button color="rgb(4, 170, 170)" class="tools-div" type="success" size="small"
+            @click="addFirst()">新增一级节点</el-button>
         <el-tree v-loading="loading" style="max-width: 600px;margin-top: 12px;" :data="treeData" show-checkbox
             node-key="catId" :default-expanded-keys="expanded" :expand-on-click-node="false" :props="defaultProps"
-            @node-click="handleNodeClick">
+            @node-click="handleNodeClick" :allow-drop="allowDrop" draggable @node-drop="handleDrop">
             <template #default="{ node, data }">
                 <span class="custom-tree-node">
                     <span>{{ node.label }}</span>
@@ -14,10 +16,43 @@
                             style="margin-left: 8px;" @click="remove(node, data)" link>
                             删除节点
                         </el-button>
+                        <el-button type="warning" style="margin-left: 8px;" @click="update(data)" link>
+                            修改节点
+                        </el-button>
                     </span>
                 </span>
             </template>
         </el-tree>
+
+        <el-dialog v-model="visible" title='新增分类' width="40%" close>
+            <el-form :model="dataForm" ref="dataFormRef" label-width="120px" :rules="rules">
+                <el-form-item label="分类名称" prop="name">
+                    <el-input v-model="dataForm.name" />
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="doAppend()">新增</el-button>
+                    <el-button @click="visible = false">取消</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
+
+        <el-dialog v-model="visibleUpdate" title='修改分类' width="40%">
+            <el-form :model="dataForm" ref="dataFormRef" label-width="120px" :rules="rules">
+                <el-form-item label="分类名称" prop="name">
+                    <el-input v-model="dataForm.name" />
+                </el-form-item>
+                <el-form-item label="图标" prop="icon">
+                    <el-input v-model="dataForm.icon" />
+                </el-form-item>
+                <el-form-item label="计量单位" prop="productUnit">
+                    <el-input v-model="dataForm.productUnit" />
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="doUpdate()">修改</el-button>
+                    <el-button @click="visibleUpdate = false">取消</el-button>
+                </el-form-item>
+            </el-form>
+        </el-dialog>
     </div>
 </template>
 
@@ -26,15 +61,60 @@ import { onMounted, reactive, ref } from "vue"
 import baseService from "@/service/baseService"
 import type Node from 'element-plus/es/components/tree/src/model/node'
 import { ElMessage, ElMessageBox } from "element-plus"
+
+const emit = defineEmits(["refreshDataList"]);
+
 onMounted(() => {
     getInfo()
 });
+
+const rules = ref({
+    name: [
+        { required: true, message: "请输入分类名称", trigger: "blur" },
+        { min: 1, max: 30, message: '名称长度在 1 到 30 个字符之间', trigger: 'blur' }
+    ],
+    icon: [
+        { required: false, message: "请输入分类图标url", trigger: "blur" },
+        { min: 0, max: 255, message: '图标url过长!', trigger: 'blur' }
+    ],
+    productUnit: [
+        { required: false, message: "请输入计量单位名称", trigger: "blur" },
+        { min: 0, max: 16, message: '单位名过长!', trigger: 'blur' }
+    ]
+});
+
+const dataForm = reactive({
+    catId: "",
+    name: "",
+    parentCid: 0,
+    catLevel: 1,
+    showStatus: 1,
+    sort: 0,
+    icon: null,
+    productUnit: null,
+    productCount: 0
+});
+
+const dataFormRef = ref()
+
+const visible = ref(false)
+const visibleUpdate = ref(false)
+
+let updateNodes = ref<NodeVo[]>([])
 
 interface Tree {
     [x: string]: any
     id: number
     label: string
     children?: Tree[]
+}
+
+// 定义 Node 接口
+interface NodeVo {
+    catId: string | number;
+    parentCid: number;
+    catLevel: number;
+    sort: number;
 }
 
 const defaultProps = {
@@ -61,14 +141,85 @@ const handleNodeClick = (data: Tree) => {
     console.log(data)
 }
 
+const update = (data: Tree) => {
+    baseService.get(`/product/category/${data.catId}`).then((res) => {
+        console.log("成功获取Node data: ", res.data)
+        dataForm.catId = res.data.catId
+        dataForm.name = res.data.name
+        dataForm.parentCid = res.data.parentCid
+        dataForm.catLevel = res.data.catLevel
+        dataForm.icon = res.data.icon
+        dataForm.productUnit = res.data.productUnit
+        console.log("update", res.data)
+    }).catch(() => {
+        ElMessage.error("获取节点数据失败！")
+    });
+    visibleUpdate.value = true
+}
+
 const append = (data: Tree) => {
-    // const newChild = { id: id++, label: 'testtest', children: [] }
-    // if (!data.children) {
-    //     data.children = []
-    // }
-    // data.children.push(newChild)
-    // treeData.value = [...treeData.value]
+    dataForm.name = ""
+    dataForm.icon = null
+    dataForm.productUnit = null
+    visible.value = true
+    dataForm.parentCid = data.catId
+    dataForm.catLevel = data.catLevel + 1
     console.log("append", data)
+}
+
+const doUpdate = () => {
+    dataFormRef.value.validate((valid: boolean) => {
+        if (!valid) {
+            ElMessage.error("数据格式错误!")
+            visibleUpdate.value = false
+            dataForm.name = ""
+            dataForm.catId = ""
+            return false;
+        } else {
+            baseService.put("/product/category/update", dataForm).then(() => {
+                ElMessage.success("修改分类数据成功！")
+                expanded.value = [dataForm.parentCid]
+                getInfo()
+                console.log("修改分类数据成功！", dataForm)
+            }).catch(() => {
+                console.log("修改分类数据失败", dataForm)
+                ElMessage.error("修改分类数据失败！")
+            });
+            visibleUpdate.value = false
+            dataForm.name = ""
+            dataForm.catId = ""
+        }
+    })
+}
+const addFirst = () => {
+    visible.value = true
+    dataForm.parentCid = 0
+    dataForm.catLevel = 1
+    console.log("addFirst")
+}
+
+// 表单提交
+const doAppend = () => {
+    dataFormRef.value.validate((valid: boolean) => {
+        if (!valid) {
+            ElMessage.error("数据格式错误!")
+            visible.value = false
+            dataForm.name = ""
+            return false;
+        } else {
+            baseService.post("/product/category/save", dataForm).then(() => {
+                ElMessage.success("添加分类数据成功！")
+                expanded.value = [dataForm.parentCid]
+                getInfo()
+                console.log("提交分类数据成功", dataForm)
+            }).catch(() => {
+                console.log("提交分类数据失败", dataForm)
+                ElMessage.error("添加分类数据失败！")
+            });
+            visible.value = false
+            dataForm.name = ""
+        }
+    })
 }
 
 const remove = (node: Node, data: Tree) => {
@@ -84,8 +235,7 @@ const remove = (node: Node, data: Tree) => {
 }
 
 const doRemove = (node: Node, data: Tree) => {
-    let ids = [data.catId]
-    console.log("ids", ids)
+    const ids = [data.catId]
     baseService.delete("/product/category/delete", ids).then(() => {
         getInfo()
         console.log("成功删除分类数据: ", ids)
@@ -94,6 +244,98 @@ const doRemove = (node: Node, data: Tree) => {
     }).catch(() => {
         ElMessage.error("删除分类数据失败！")
     });
+}
+
+const allowDrop = (draggingNode: Node, dropNode: Node, type: string) => {
+    console.log("draggingNode level", countNodeLevel(draggingNode))
+    console.log("dropNode level", dropNode.level)
+    return type === "inner" ? (countNodeLevel(draggingNode) + dropNode.level <= 3) : (countNodeLevel(draggingNode) <= 3)
+}
+
+const countNodeLevel = (node: Node) => {
+    let level = 1
+    let children = node.childNodes
+    if (children.length > 0) {
+        level++
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].childNodes.length > 0) {
+                level++
+                break;
+            }
+        }
+    }
+
+    return level
+}
+
+const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
+    updateNodes.value = [] //重置更新节点列表
+    let pCid = 0
+    let sibilings = null
+    let catLevel = 0
+    //1.当前节点最新父Id
+    //2.当前节点的最新排序
+    //3.当前节点的最新层级
+    if (type === "inner") {
+        pCid = dropNode.data.catId == undefined ? 0 : dropNode.data.catId
+        sibilings = dropNode.childNodes
+        catLevel = dropNode.data.catLevel + 1
+    } else {
+        pCid = draggingNode.data.parentCid == undefined ? 0 : dropNode.data.parentCid
+        sibilings = dropNode.parent.childNodes
+        catLevel = dropNode.data.catLevel
+    }
+
+    for (let i = 0; i < sibilings.length; i++) {
+        if (sibilings[i].data.catId === draggingNode.data.catId) {
+            //如果正在遍历拖拽中的节点，更新父节点、排序和层级
+            updateNodes.value.push({
+                catId: sibilings[i].data.catId,
+                sort: i,
+                parentCid: pCid,
+                catLevel: catLevel,
+            })
+
+            updateChildNodeLevel(sibilings[i], catLevel)
+        } else {
+            //否则只更新排序
+            updateNodes.value.push({
+                catId: sibilings[i].data.catId,
+                sort: i,
+                parentCid: sibilings[i].data.catId,
+                catLevel: sibilings[i].data.catLevel,
+            })
+        }
+    }
+
+    console.log("updateNodes其它", updateNodes.value)
+
+    // baseService.put("/product/category/update/sort", {
+    //     parentCid: dropNode.data.catId,
+    //     sort: dropNode.data.catLevel,
+    //     level: dropNode.data.catLevel + 1
+    // }).then(() => {
+    //     ElMessage.success("修改分类顺序成功！")
+    //     getInfo()
+    //     console.log("修改分类顺序成功！", draggingNode.data.catId, dropNode.data.catLevel)
+    // }).catch(() => {
+    //     ElMessage.error("修改分类顺序失败！")
+    // })
+}
+
+const updateChildNodeLevel = (node: Node, catLevel: number) => {
+    //因为树只有三层，所以子节点有节点的，通过拖拽一定不能改变所在层级
+    //所以，最多只需要遍历一层节点
+    if (node.childNodes && node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+            updateNodes.value.push({
+                catId: node.childNodes[i].data.catId,
+                sort: i,
+                parentCid: node.childNodes[i].data.pCid,
+                catLevel: catLevel + 1,
+            })
+        }
+    }
 }
 </script>
 
@@ -112,5 +354,15 @@ const doRemove = (node: Node, data: Tree) => {
     font-size: 25px;
     font-family: "微软雅黑";
     font-weight: bold;
+}
+
+.tools-div {
+    width: 100px;
+    height: 40px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 3px;
 }
 </style>
