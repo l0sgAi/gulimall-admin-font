@@ -1,11 +1,21 @@
 <template>
     <div>
         <a class="head">商品分类管理</a>
-        <el-button color="rgb(4, 170, 170)" class="tools-div" type="success" size="small"
-            @click="addFirst()">新增一级节点</el-button>
+        <el-switch v-model="draggable" style="margin-right: 25px;" active-text="开启拖拽" inactive-text="关闭拖拽" />
+        <el-button color="rgb(4, 170, 170)" class="tools-div" type="success" size="small" @click="addFirst">
+            新增一级节点
+        </el-button>
+        <el-button color="rgb(0, 145, 25)" v-show="draggable" class="tools-div" type="success" size="small"
+            @click="saveUpdateBatch">保存本次更改
+        </el-button>
+        <el-button class="tools-div" type="warning" size="small" @click="reset">重置
+        </el-button>
+        <el-button class="tools-div" type="danger" size="small" @click="deleteBatch">批量删除
+        </el-button>
         <el-tree v-loading="loading" style="max-width: 600px;margin-top: 12px;" :data="treeData" show-checkbox
             node-key="catId" :default-expanded-keys="expanded" :expand-on-click-node="false" :props="defaultProps"
-            @node-click="handleNodeClick" :allow-drop="allowDrop" draggable @node-drop="handleDrop">
+            @node-click="handleNodeClick" :allow-drop="allowDrop" :draggable="draggable" @node-drop="handleDrop"
+            ref="menuTree">
             <template #default="{ node, data }">
                 <span class="custom-tree-node">
                     <span>{{ node.label }}</span>
@@ -60,13 +70,15 @@
 import { onMounted, reactive, ref } from "vue"
 import baseService from "@/service/baseService"
 import type Node from 'element-plus/es/components/tree/src/model/node'
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage, ElMessageBox, ElTree } from "element-plus"
 
 const emit = defineEmits(["refreshDataList"]);
 
 onMounted(() => {
     getInfo()
 });
+
+const draggable = ref(false)
 
 const rules = ref({
     name: [
@@ -108,6 +120,8 @@ interface Tree {
     label: string
     children?: Tree[]
 }
+
+const menuTree = ref<InstanceType<typeof ElTree>>()
 
 // 定义 Node 接口
 interface NodeVo {
@@ -192,6 +206,9 @@ const doUpdate = () => {
     })
 }
 const addFirst = () => {
+    dataForm.name = ""
+    dataForm.icon = null
+    dataForm.productUnit = null
     visible.value = true
     dataForm.parentCid = 0
     dataForm.catLevel = 1
@@ -247,8 +264,6 @@ const doRemove = (node: Node, data: Tree) => {
 }
 
 const allowDrop = (draggingNode: Node, dropNode: Node, type: string) => {
-    console.log("draggingNode level", countNodeLevel(draggingNode))
-    console.log("dropNode level", dropNode.level)
     return type === "inner" ? (countNodeLevel(draggingNode) + dropNode.level <= 3) : (countNodeLevel(draggingNode) <= 3)
 }
 
@@ -269,7 +284,6 @@ const countNodeLevel = (node: Node) => {
 }
 
 const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
-    updateNodes.value = [] //重置更新节点列表
     let pCid = 0
     let sibilings = null
     let catLevel = 0
@@ -277,16 +291,19 @@ const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
     //2.当前节点的最新排序
     //3.当前节点的最新层级
     if (type === "inner") {
-        pCid = dropNode.data.catId == undefined ? 0 : dropNode.data.catId
+        pCid = dropNode.data.catId
         sibilings = dropNode.childNodes
         catLevel = dropNode.data.catLevel + 1
+        expanded.value.push(dropNode.data.catId)
     } else {
-        pCid = draggingNode.data.parentCid == undefined ? 0 : dropNode.data.parentCid
+        pCid = dropNode.data.parentCid
         sibilings = dropNode.parent.childNodes
         catLevel = dropNode.data.catLevel
+        expanded.value.push(dropNode.parent.data.catId)
     }
+    console.log("展开列表_快照", expanded.value)
 
-    for (let i = 0; i < sibilings.length; i++) {
+    for (let i = 0; i < sibilings.length; i++) { //处理兄弟节点
         if (sibilings[i].data.catId === draggingNode.data.catId) {
             //如果正在遍历拖拽中的节点，更新父节点、排序和层级
             updateNodes.value.push({
@@ -302,25 +319,13 @@ const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
             updateNodes.value.push({
                 catId: sibilings[i].data.catId,
                 sort: i,
-                parentCid: sibilings[i].data.catId,
+                parentCid: sibilings[i].data.parentCid,
                 catLevel: sibilings[i].data.catLevel,
             })
         }
     }
 
-    console.log("updateNodes其它", updateNodes.value)
-
-    // baseService.put("/product/category/update/sort", {
-    //     parentCid: dropNode.data.catId,
-    //     sort: dropNode.data.catLevel,
-    //     level: dropNode.data.catLevel + 1
-    // }).then(() => {
-    //     ElMessage.success("修改分类顺序成功！")
-    //     getInfo()
-    //     console.log("修改分类顺序成功！", draggingNode.data.catId, dropNode.data.catLevel)
-    // }).catch(() => {
-    //     ElMessage.error("修改分类顺序失败！")
-    // })
+    console.log("updateNodes", updateNodes.value)
 }
 
 const updateChildNodeLevel = (node: Node, catLevel: number) => {
@@ -331,12 +336,55 @@ const updateChildNodeLevel = (node: Node, catLevel: number) => {
             updateNodes.value.push({
                 catId: node.childNodes[i].data.catId,
                 sort: i,
-                parentCid: node.childNodes[i].data.pCid,
+                parentCid: node.childNodes[i].data.parentCid,
                 catLevel: catLevel + 1,
             })
         }
     }
 }
+
+const saveUpdateBatch = () => {
+    baseService.put("/product/category/update/sort", updateNodes.value).then(() => {
+        ElMessage.success("修改分类成功！")
+        getInfo()
+        console.log("批量修改分类成功！", updateNodes)
+        updateNodes.value = [] //重置更新节点列表
+    }).catch(() => {
+        ElMessage.error("批量修改分类失败！")
+        getInfo()
+        updateNodes.value = [] //重置更新节点列表
+    })
+    console.log("展开列表", expanded.value)
+}
+
+const deleteBatch = () => {
+    let checkedNodes = menuTree.value!.getCheckedNodes()
+    let nodeIds = checkedNodes.map(node => node.catId)
+    let parentCids = checkedNodes.map(node => node.parentCid)
+    ElMessageBox.confirm(`此操作将删除${checkedNodes.length}个菜单，确定删除？`, '删除确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+    }).then(() => {
+        baseService.delete("/product/category/delete", nodeIds).then(() => {
+            getInfo()
+            console.log("成功删除分类数据: ", checkedNodes)
+            ElMessage.success("删除分类成功！")
+            expanded.value = parentCids
+        }).catch(() => {
+            ElMessage.error("删除分类数据失败！")
+        })
+    }).catch(() => {
+        ElMessage.info('已取消删除')
+    })
+}
+
+const reset = () => {
+    getInfo()
+    expanded.value = [] //重置展开列表
+    updateNodes.value = [] //重置更新节点列表
+}
+
 </script>
 
 <style>
