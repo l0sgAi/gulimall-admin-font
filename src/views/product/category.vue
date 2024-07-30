@@ -125,10 +125,10 @@ const menuTree = ref<InstanceType<typeof ElTree>>()
 
 // 定义 Node 接口
 interface NodeVo {
-    catId: string | number;
-    parentCid: number;
-    catLevel: number;
-    sort: number;
+    catId: string | number
+    parentCid: number
+    catLevel: number
+    sort: number
 }
 
 const defaultProps = {
