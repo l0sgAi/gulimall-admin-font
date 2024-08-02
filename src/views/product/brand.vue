@@ -14,7 +14,9 @@
       <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
       <el-table-column prop="brandId" label="品牌id" header-align="center" align="center"></el-table-column>
       <el-table-column prop="name" label="品牌名" header-align="center" align="center"></el-table-column>
-      <el-table-column prop="logo" label="品牌logo地址" header-align="center" align="center"></el-table-column>
+      <el-table-column prop="logo" label="品牌logo" header-align="center" align="center" #default="scope">
+        <img v-if="scope.row.logo" :src="scope.row.logo" class="logo" />
+      </el-table-column>
       <el-table-column prop="descript" label="介绍" header-align="center" align="center"></el-table-column>
       <el-table-column prop="showStatus" label="显示状态" header-align="center" align="center" #default="scope">
         <el-tag>{{ scope.row.showStatus === 1 ? "显示" : "不显示" }}</el-tag>
@@ -58,6 +60,7 @@ const state = reactive({ ...useView(view), ...toRefs(view) })
 
 const addOrUpdateRef = ref();
 const addOrUpdateHandle = (id?: number) => {
+  getInfo();
   addOrUpdateRef.value.init(id);
 }
 
@@ -96,3 +99,12 @@ const deleteBatch = () => {
   // state.deleteHandle(ids)
 }
 </script>
+
+<style>
+.logo {
+  width: 128px;
+  height: 128px;
+  display: flex;
+  margin-left: 27px;
+}
+</style>

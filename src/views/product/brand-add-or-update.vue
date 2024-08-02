@@ -6,8 +6,8 @@
       <el-form-item label="品牌名" prop="name">
         <el-input v-model="dataForm.name" placeholder="品牌名"></el-input>
       </el-form-item>
-      <el-form-item label="品牌logo地址" prop="logo">
-        <el-input v-model="dataForm.logo" placeholder="品牌logo地址"></el-input>
+      <el-form-item label="品牌logo" prop="logo">
+        <SingleUpload :logo="dataForm.logo" @changeLogo="changeLogoHandle"></SingleUpload>
       </el-form-item>
       <el-form-item label="介绍" prop="descript">
         <el-input v-model="dataForm.descript" :rows="5" type="textarea" placeholder="品牌介绍"></el-input>
@@ -35,7 +35,9 @@
 <script lang="ts" setup>
 import { reactive, ref, onMounted } from "vue"
 import baseService from "@/service/baseService"
-import { ElMessage } from "element-plus";
+import { ElMessage } from "element-plus"
+import SingleUpload from "@/upload/singleUpload.vue"
+
 const emit = defineEmits(["refreshDataList"])
 const visible = ref(false);
 const dataFormRef = ref();
@@ -82,6 +84,11 @@ const getInfo = (brandId: number) => {
   });
 };
 
+const changeLogoHandle = (logo: string) => {
+  dataForm.logo = logo
+  console.log("changeLogoHandle", dataForm.logo)
+}
+
 // 表单提交
 const dataFormSubmitHandle = () => {
   dataFormRef.value.validate((valid: boolean) => {
@@ -89,6 +96,7 @@ const dataFormSubmitHandle = () => {
       return false;
     }
     (!dataForm.brandId ? baseService.post : baseService.put)("/product/brand", dataForm).then((res) => {
+      console.log("上传的  LOGO", dataForm.logo)
       ElMessage.success({
         message: '成功',
         duration: 500,
