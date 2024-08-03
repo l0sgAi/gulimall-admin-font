@@ -64,7 +64,6 @@ const handleRemove = (file: any, fileList: any) => {
 const beforeUpload = async (file: any) => {
     try {
         const response = await baseService.get('/thirdparty/oss/policy');
-        console.log("响应的数据01", response);
         dataObj.value = {
             policy: response.data.policy,
             signature: response.data.signature,
@@ -73,7 +72,6 @@ const beforeUpload = async (file: any) => {
             dir: response.data.dir,
             host: response.data.host,
         };
-        console.log("响应的数据02", dataObj.value);
         return true;
     } catch (err) {
         ElMessage.error('上传图片失败!');
@@ -82,19 +80,15 @@ const beforeUpload = async (file: any) => {
 }
 
 const handleUploadSuccess = (res: any, file: any) => {
-    console.log("上传成功...");
     ElMessage.success('上传图片成功!')
     fileList.value.pop();
     const newUrl = dataObj.value.host + '/' + dataObj.value.key.replace("${filename}", file.name)
     fileList.value.push({ name: file.name, url: newUrl })
     imageUrl.value = fileList.value[0].url
-    console.log("上传成功后的图片地址", fileList.value[0].url)
     emitInput(fileList.value[0].url)
-    console.log("上传成功，现在的props.logo", props.logo, props)
 }
 
 watch(() => props.logo, (newValue) => {
-    console.log("watch的props.value", newValue);
     fileList.value = [{ name: imageName.value, url: newValue }]
     imageUrl.value = newValue
 })

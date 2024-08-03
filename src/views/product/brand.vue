@@ -19,7 +19,8 @@
       </el-table-column>
       <el-table-column prop="descript" label="介绍" header-align="center" align="center"></el-table-column>
       <el-table-column prop="showStatus" label="显示状态" header-align="center" align="center" #default="scope">
-        <el-tag>{{ scope.row.showStatus === 1 ? "显示" : "不显示" }}</el-tag>
+        <el-tag :type="scope.row.showStatus === 1 ? 'success' : 'danger'">{{ scope.row.showStatus === 1 ? "显示" : "不显示"
+          }}</el-tag>
       </el-table-column>
       <el-table-column prop="firstLetter" label="检索首字母" header-align="center" align="center"></el-table-column>
       <el-table-column prop="sort" label="排序" header-align="center" align="center"></el-table-column>
@@ -104,6 +105,7 @@ const deleteBatch = () => {
 .logo {
   width: 128px;
   height: 128px;
+  border-radius: 5px;
   display: flex;
   margin-left: 27px;
 }

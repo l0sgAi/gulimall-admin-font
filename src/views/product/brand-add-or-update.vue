@@ -86,7 +86,6 @@ const getInfo = (brandId: number) => {
 
 const changeLogoHandle = (logo: string) => {
   dataForm.logo = logo
-  console.log("changeLogoHandle", dataForm.logo)
 }
 
 // 表单提交
@@ -96,7 +95,6 @@ const dataFormSubmitHandle = () => {
       return false;
     }
     (!dataForm.brandId ? baseService.post : baseService.put)("/product/brand", dataForm).then((res) => {
-      console.log("上传的  LOGO", dataForm.logo)
       ElMessage.success({
         message: '成功',
         duration: 500,
@@ -105,7 +103,6 @@ const dataFormSubmitHandle = () => {
           emit("refreshDataList");
         }
       });
-      console.log("visible", visible)
     });
   });
 };

@@ -39,6 +39,12 @@
                 <el-form-item label="分类名称" prop="name">
                     <el-input v-model="dataForm.name" />
                 </el-form-item>
+                <el-form-item label="图标" prop="icon">
+                    <SingleUpload :logo="dataForm.icon" @changeLogo="changeLogoHandle"></SingleUpload>
+                </el-form-item>
+                <el-form-item label="计量单位" prop="productUnit">
+                    <el-input v-model="dataForm.productUnit" />
+                </el-form-item>
                 <el-form-item>
                     <el-button type="primary" @click="doAppend()">新增</el-button>
                     <el-button @click="visible = false">取消</el-button>
@@ -52,7 +58,7 @@
                     <el-input v-model="dataForm.name" />
                 </el-form-item>
                 <el-form-item label="图标" prop="icon">
-                    <el-input v-model="dataForm.icon" />
+                    <SingleUpload :logo="dataForm.icon" @changeLogo="changeLogoHandle"></SingleUpload>
                 </el-form-item>
                 <el-form-item label="计量单位" prop="productUnit">
                     <el-input v-model="dataForm.productUnit" />
@@ -71,6 +77,7 @@ import { onMounted, reactive, ref } from "vue"
 import baseService from "@/service/baseService"
 import type Node from 'element-plus/es/components/tree/src/model/node'
 import { ElMessage, ElMessageBox, ElTree } from "element-plus"
+import SingleUpload from "@/upload/singleUpload.vue"
 
 const emit = defineEmits(["refreshDataList"]);
 
@@ -102,8 +109,8 @@ const dataForm = reactive({
     catLevel: 1,
     showStatus: 1,
     sort: 0,
-    icon: null,
-    productUnit: null,
+    icon: "",
+    productUnit: "",
     productCount: 0
 });
 
@@ -173,8 +180,8 @@ const update = (data: Tree) => {
 
 const append = (data: Tree) => {
     dataForm.name = ""
-    dataForm.icon = null
-    dataForm.productUnit = null
+    dataForm.icon = ""
+    dataForm.productUnit = ""
     visible.value = true
     dataForm.parentCid = data.catId
     dataForm.catLevel = data.catLevel + 1
@@ -196,7 +203,6 @@ const doUpdate = () => {
                 getInfo()
                 console.log("修改分类数据成功！", dataForm)
             }).catch(() => {
-                console.log("修改分类数据失败", dataForm)
                 ElMessage.error("修改分类数据失败！")
             });
             visibleUpdate.value = false
@@ -207,12 +213,11 @@ const doUpdate = () => {
 }
 const addFirst = () => {
     dataForm.name = ""
-    dataForm.icon = null
-    dataForm.productUnit = null
+    dataForm.icon = ""
+    dataForm.productUnit = ""
     visible.value = true
     dataForm.parentCid = 0
     dataForm.catLevel = 1
-    console.log("addFirst")
 }
 
 // 表单提交
@@ -230,7 +235,6 @@ const doAppend = () => {
                 getInfo()
                 console.log("提交分类数据成功", dataForm)
             }).catch(() => {
-                console.log("提交分类数据失败", dataForm)
                 ElMessage.error("添加分类数据失败！")
             });
             visible.value = false
@@ -301,7 +305,6 @@ const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
         catLevel = dropNode.data.catLevel
         expanded.value.push(dropNode.parent.data.catId)
     }
-    console.log("展开列表_快照", expanded.value)
 
     for (let i = 0; i < sibilings.length; i++) { //处理兄弟节点
         if (sibilings[i].data.catId === draggingNode.data.catId) {
@@ -324,8 +327,6 @@ const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
             })
         }
     }
-
-    console.log("updateNodes", updateNodes.value)
 }
 
 const updateChildNodeLevel = (node: Node, catLevel: number) => {
@@ -385,6 +386,9 @@ const reset = () => {
     updateNodes.value = [] //重置更新节点列表
 }
 
+const changeLogoHandle = (logo: string) => {
+    dataForm.icon = logo
+}
 </script>
 
 <style>
