@@ -25,7 +25,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['changeLogo']);
+const emit = defineEmits(['changeLogo'])
 
 const imageUrl = ref(props.logo);
 
@@ -93,14 +93,6 @@ watch(() => props.logo, (newValue) => {
     imageUrl.value = newValue
 })
 </script>
-
-<style>
-.avatar-uploader .avatar {
-    width: 178px;
-    height: 178px;
-    display: block;
-}
-</style>
 
 <style>
 .avatar-uploader .el-upload {

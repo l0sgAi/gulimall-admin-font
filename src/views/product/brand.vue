@@ -72,6 +72,7 @@ const getInfo = () => {
   baseService.get("/product/brand/page").then((res) => {
     console.log("成功获取Brand data: ", res.data)
     state.dataList = res.data.list
+    console.log("成功获取state.dataList: ", state.dataList)
   }).catch(() => {
     ElMessage.error("获取数据失败！")
   });
@@ -103,8 +104,8 @@ const deleteBatch = () => {
 
 <style>
 .logo {
-  width: 128px;
-  height: 128px;
+  width: 80px;
+  height: 80px;
   border-radius: 5px;
   display: flex;
   margin-left: 27px;
