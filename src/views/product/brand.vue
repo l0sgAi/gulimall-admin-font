@@ -61,7 +61,7 @@ const state = reactive({ ...useView(view), ...toRefs(view) })
 
 const addOrUpdateRef = ref();
 const addOrUpdateHandle = (id?: number) => {
-  getInfo();
+  getInfo()
   addOrUpdateRef.value.init(id);
 }
 
@@ -107,7 +107,5 @@ const deleteBatch = () => {
   width: 80px;
   height: 80px;
   border-radius: 5px;
-  display: flex;
-  margin-left: 27px;
 }
 </style>

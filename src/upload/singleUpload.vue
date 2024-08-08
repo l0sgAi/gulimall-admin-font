@@ -27,7 +27,7 @@ const props = defineProps({
 
 const emit = defineEmits(['changeLogo'])
 
-const imageUrl = ref(props.logo);
+const imageUrl = ref(props.logo)
 
 const imageName = computed(() => {
     if (props.logo != null && props.logo !== '') {

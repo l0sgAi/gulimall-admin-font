@@ -9,12 +9,16 @@
 import { onMounted, ref } from "vue"
 import baseService from "@/service/baseService"
 import { ElMessage, ElTree } from "element-plus"
-import type Node from 'element-plus/es/components/tree/src/model/node'
+import { RefSymbol } from "@vue/reactivity";
 
-const emit = defineEmits(["categoryData"])
+const emit = defineEmits(["categoryData", "categoryTree"])
 
 const emitInput = (node: any) => {
     emit('categoryData', node)
+}
+
+const emitTree = (tree: any) => {
+    emit('categoryTree', tree)
 }
 
 onMounted(() => {
@@ -36,11 +40,13 @@ const defaultProps = {
 let expanded = ref<number[]>([])
 let treeData = ref<Tree[]>([])
 let loading = ref(true) // 控制加载状态的变量
+
 const getInfo = () => {
     loading.value = true
     baseService.get("/product/category/page/tree").then((res) => {
         console.log("成功获取Tree data: ", res.data)
         treeData.value = res.data
+        emitTree(res.data)
         loading.value = false // 数据加载完成后，关闭加载状态
     }).catch(() => {
         ElMessage.error("获取分类数据失败！")
