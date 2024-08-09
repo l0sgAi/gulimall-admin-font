@@ -8,11 +8,14 @@
             <div class="mod-product__attrgroup">
                 <el-form :inline="true" :model="state.dataForm" @keyup.enter="state.getDataList()">
                     <el-form-item>
-                        <el-input v-show="curCatId === 0 ? false : true" v-model="queryKey"
-                            placeholder="组名查询"></el-input>
+                        <!-- <el-input v-show="curCatId === 0 ? false : true" v-model="queryKey"
+                            placeholder="组名查询"></el-input> -->
+                        <el-input v-model="queryKey" placeholder="组名查询"></el-input>
+
                     </el-form-item>
                     <el-form-item>
-                        <el-button v-show="curCatId === 0 ? false : true" @click="query()">查询</el-button>
+                        <!-- <el-button v-show="curCatId === 0 ? false : true" @click="query()">查询</el-button> -->
+                        <el-button @click="query()">查询</el-button>
                     </el-form-item>
                     <el-form-item>
                         <el-button v-if="state.hasPermission('product:attrgroup:save')" type="primary"
@@ -21,7 +24,7 @@
                     <el-form-item>
                         <el-button v-if="state.hasPermission('product:attrgroup:delete')" type="danger"
                             @click="deleteBatch">删除</el-button>
-                        <a class="head">当前分类: {{ curNode }}</a>
+                        <!-- <a class="head">当前分类: {{ curNode }}</a> -->
                     </el-form-item>
                 </el-form>
                 <el-table ref="attrGroupTable" v-loading="state.dataListLoading" :data="state.dataList" border
@@ -147,7 +150,6 @@ const query = () => {
 const deleteBatch = () => {
     let checkedAttrGroups = attrGroupTable.value!.getSelectionRows()
     let ids = checkedAttrGroups.map((attrGroup: { attrGroupId: number }) => attrGroup.attrGroupId)
-    console.log("***待删除ids", ids)
     ElMessageBox.confirm(`此操作将删除${ids.length}个分组数据，确定删除？`, '删除确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -169,11 +171,9 @@ const deleteBatch = () => {
 
 <style>
 .head {
-    display: flex;
     font-size: 21px;
     font-family: "微软雅黑";
     font-weight: bold;
-    margin-left: 64px;
 }
 
 .icon {
