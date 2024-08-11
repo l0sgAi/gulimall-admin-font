@@ -25,9 +25,11 @@
         <el-table ref="attr=Table" v-loading="state.dataListLoading" :data="state.dataList" border
           @selection-change="state.dataListSelectionChangeHandle" style="width: 100%">
           <el-table-column type="selection" header-align="center" align="center"></el-table-column>
-          <el-table-column prop="attrId" header-align="center" align="center" label="id"></el-table-column>
-          <el-table-column prop="attrName" header-align="center" align="center" label="属性名"></el-table-column>
-          <el-table-column v-if="attrtype == 1" prop="searchType" header-align="center" align="center" label="可检索">
+          <el-table-column prop="attrId" header-align="center" align="center" label="id" width="50"></el-table-column>
+          <el-table-column prop="attrName" header-align="center" align="center" label="属性名"
+            width="100"></el-table-column>
+          <el-table-column v-if="attrtype == 1" prop="searchType" header-align="center" align="center" label="可检索"
+            width="70">
             <template #default="scope">
               <el-switch v-model="scope.row.searchType" class="ml-2" inline-prompt
                 style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="是" inactive-text="否"
@@ -40,10 +42,10 @@
               <el-tag v-else>多选</el-tag>
             </template>
           </el-table-column> -->
-          <el-table-column prop="icon" header-align="center" align="center" label="图标" #default="scope">
+          <el-table-column prop="icon" header-align="center" align="center" label="图标" width="110" #default="scope">
             <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
           </el-table-column>
-          <el-table-column prop="valueSelect" header-align="center" align="center" label="可选值">
+          <el-table-column prop="valueSelect" header-align="center" align="center" width="120" label="可选值">
             <template #default="scope">
               <el-tooltip placement="top">
                 <div slot="content">
@@ -53,7 +55,7 @@
               </el-tooltip>
             </template>
           </el-table-column>
-          <el-table-column prop="enable" header-align="center" align="center" label="启用">
+          <el-table-column prop="enable" header-align="center" align="center" label="启用" width="70">
             <template #default="scope">
               <el-switch v-model="scope.row.enable" class="ml-2" inline-prompt
                 style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="是" inactive-text="否"
@@ -61,13 +63,13 @@
             </template>
           </el-table-column>
           <el-table-column prop="catelogName" header-align="center" align="center" label="所属分类" #default="scope">
-            <!-- <el-cascader style="width: 75%;" placeholder="搜索分类" v-model="scope.row.catelogId" :options="treeDataRef"
-              :props="casProps">
-            </el-cascader> -->
+            <el-cascader v-model="scope.row.catelogId" :options="treeDataRef" :props="casProps">
+            </el-cascader>
           </el-table-column>
           <el-table-column v-if="attrtype == 1" prop="groupName" header-align="center" align="center"
             label="所属分组"></el-table-column>
-          <el-table-column v-if="attrtype == 1" prop="showDesc" header-align="center" align="center" label="快速展示">
+          <el-table-column v-if="attrtype == 1" prop="showDesc" header-align="center" align="center" label="快速展示"
+            width="70">
             <template #default="scope">
               <el-switch v-model="scope.row.showDesc" class="ml-2" inline-prompt
                 style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="是" inactive-text="否"
@@ -132,13 +134,13 @@ const view = reactive({
   deleteURL: "/product/attr"
 });
 
-// const casProps = reactive({
-//   value: 'catId',
-//   label: 'name',
-//   children: 'children',
-//   emitPath: false,
-//   disabled: true,
-// })
+const casProps = reactive({
+  value: 'catId',
+  label: 'name',
+  children: 'children',
+  emitPath: false,
+  disabled: 'catId',
+})
 
 const state = reactive({ ...useView(view), ...toRefs(view) });
 
