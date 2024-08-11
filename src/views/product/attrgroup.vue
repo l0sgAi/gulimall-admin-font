@@ -39,9 +39,9 @@
                     <el-table-column prop="icon" label="组图标" header-align="center" align="center" #default="scope">
                         <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
                     </el-table-column>
-                    <el-table-column prop="catelogId" label="所属分类id" header-align="center" align="center"
+                    <el-table-column prop="catelogId" label="所属分类" header-align="center" align="center"
                         #default="scope">
-                        <el-tag>{{ scope.row.catelogId }}</el-tag>
+                        <el-cascader v-model="scope.row.catelogId" :options="treeDataRef" :props="casProps" />
                     </el-table-column>
                     <el-table-column label="操作" fixed="right" header-align="center" align="center" width="150">
                         <template v-slot="scope">
@@ -75,6 +75,14 @@ import { ElTable } from 'element-plus'
 
 onMounted(() => {
     getTreeData
+})
+
+const casProps = reactive({
+    value: 'catId',
+    label: 'name',
+    children: 'children',
+    emitPath: false,
+    disabled: 'catId',
 })
 
 interface Tree {

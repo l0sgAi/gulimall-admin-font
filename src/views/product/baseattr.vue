@@ -2,7 +2,7 @@
   <el-row>
     <el-col :span="4">
       <a class="head">商品分类列表</a>
-      <Category @categoryData="getNodeHandle" @categoryTree="getTreeData"></Category>
+      <Category @categoryData="getNodeHandle" @categoryTree="getData"></Category>
     </el-col>
     <el-col :span="20">
       <div class="mod-product__attr">
@@ -48,10 +48,7 @@
           <el-table-column prop="valueSelect" header-align="center" align="center" width="120" label="可选值">
             <template #default="scope">
               <el-tooltip placement="top">
-                <div slot="content">
-                  <span v-for="(i, index) in scope.row.valueSelect.split(';')" :key="index">{{ i }}<br /></span>
-                </div>
-                <el-tag type="primary">{{ scope.row.valueSelect.split(";")[0] + " ..." }}</el-tag>
+                <el-tag>{{ scope.row.valueSelect.split(";")[0] + "..." }}</el-tag>
               </el-tooltip>
             </template>
           </el-table-column>
@@ -66,8 +63,10 @@
             <el-cascader v-model="scope.row.catelogId" :options="treeDataRef" :props="casProps">
             </el-cascader>
           </el-table-column>
-          <el-table-column v-if="attrtype == 1" prop="groupName" header-align="center" align="center"
-            label="所属分组"></el-table-column>
+          <el-table-column v-if="attrtype == 1" prop="groupName" header-align="center" align="center" label="所属分组"
+            #default="scope">
+            <el-cascader v-model="scope.row.groupName" :options="groupDataRef" :props="groupProps"></el-cascader>
+          </el-table-column>
           <el-table-column v-if="attrtype == 1" prop="showDesc" header-align="center" align="center" label="快速展示"
             width="70">
             <template #default="scope">
@@ -79,7 +78,7 @@
           <el-table-column label="操作" fixed="right" header-align="center" align="center" width="150">
             <template v-slot="scope">
               <el-button v-if="state.hasPermission('product:attr:update')" type="primary" link
-                @click="addOrUpdateHandle(scope.row.attrId)">修改</el-button>
+                @click="addOrUpdateHandle(scope.row)">修改</el-button>
               <el-button v-if="state.hasPermission('product:attr:delete')" type="primary" link
                 @click="state.deleteHandle(scope.row.attrId)">删除</el-button>
             </template>
@@ -98,7 +97,7 @@
 
 <script lang="ts" setup>
 import useView from "@/hooks/useView";
-import { reactive, ref, toRefs, onMounted } from "vue";
+import { reactive, ref, toRefs, onMounted, watch } from "vue";
 import AddOrUpdate from "./baseattr-add-or-update.vue";
 import Category from "../common/category.vue"
 import baseService from "@/service/baseService"
@@ -106,7 +105,7 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { ElTable } from 'element-plus'
 
 onMounted(() => {
-  getTreeData
+  getData
 })
 
 let attrtype = ref(1)
@@ -118,9 +117,8 @@ interface Tree {
   children?: Tree[]
 }
 
-const attrTable = ref<InstanceType<typeof ElTable>>()
-
 const treeDataRef = ref<Tree[]>([])
+const groupDataRef = ref([])
 
 let curNode = ref<string>('无')
 let curCatId = ref<number>(0)
@@ -142,12 +140,19 @@ const casProps = reactive({
   disabled: 'catId',
 })
 
+const groupProps = reactive({
+  value: 'attrGroupId',
+  label: 'attrGroupName',
+  emitPath: false,
+  disabled: 'attrGroupId',
+})
+
 const state = reactive({ ...useView(view), ...toRefs(view) });
 
 const addOrUpdateRef = ref();
-const addOrUpdateHandle = (id?: number) => {
-  addOrUpdateRef.value.init(id);
-};
+const addOrUpdateHandle = (row?: any) => {
+  addOrUpdateRef.value.init(row.attrId)
+}
 
 const getNodeHandle = (node: any) => {
   if (node.catLevel === 3) {
@@ -163,8 +168,9 @@ const getNodeHandle = (node: any) => {
   }
 }
 
-const getTreeData = (treeData: any) => {
+const getData = (treeData: any) => {
   treeDataRef.value = treeData
+  getGroupData()
 }
 
 const query = () => {
@@ -176,6 +182,16 @@ const query = () => {
     ElMessage.error("查询失败!")
   })
 }
+
+const getGroupData = () => {
+  baseService.get("product/attrgroup/page").then((res) => {
+    groupDataRef.value = res.data.list
+  }).catch(err => {
+    ElMessage.error("数据获取失败!")
+    console.log("error", err)
+  })
+}
+
 </script>
 
 <style>

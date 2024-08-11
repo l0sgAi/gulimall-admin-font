@@ -14,7 +14,7 @@
       <el-form-item label="属性图标" prop="icon">
         <SingleUpload :logo="dataForm.icon" @changeLogo="changeLogoHandle"></SingleUpload>
       </el-form-item>
-      <el-form-item label="可选值列表" prop="valueSelect">
+      <el-form-item label="可选值列表" prop="valueSelectArray">
         <!-- <el-input v-model="dataForm.valueSelect" placeholder="可选值列表[用逗号分隔]"></el-input> -->
         <el-select v-model="dataForm.valueSelectArray" multiple filterable allow-create
           placeholder="请输入内容,点击确认"></el-select>
@@ -41,8 +41,8 @@
           </template>
         </el-cascader>
       </el-form-item>
-      <el-form-item label="分类分组" prop="catAttrgroup">
-        <el-cascader style="width: 75%;" placeholder="搜索分组" v-model="dataForm.catAttrgroup" :options="catAttrgroupRef"
+      <el-form-item label="分类分组" prop="groupName">
+        <el-cascader style="width: 75%;" placeholder="搜索分组" v-model="dataForm.groupName" :options="catAttrgroupRef"
           @change="handleChange" filterable :props="attrGroupProps">
         </el-cascader>
       </el-form-item>
@@ -100,7 +100,7 @@ const dataForm = reactive({
   attrType: '',
   enable: '',
   catelogId: '',
-  catAttrgroup: '',
+  groupName: '',
   showDesc: ''
 });
 
@@ -148,7 +148,7 @@ const init = (attrId?: number) => {
 // 获取信息
 const getInfo = (attrId: number) => {
   baseService.get("/product/attr/" + attrId).then((res) => {
-    Object.assign(dataForm, res.data);
+    Object.assign(dataForm, res.data)
   });
 };
 
@@ -187,7 +187,6 @@ const changeLogoHandle = (logo: string) => {
 const getCategoryAttrGroup = (curCatId: number) => {
   baseService.get(`product/attrgroup/query/attrgroup/${curCatId}`).then((res) => {
     catAttrgroupRef.value = res.data
-    console.log("获取分类对应分组", catAttrgroupRef.value)
   }).catch(err => {
     ElMessage.error("数据获取失败!")
     console.log("error", err)
