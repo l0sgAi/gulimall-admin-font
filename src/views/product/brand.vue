@@ -44,7 +44,7 @@
       :total="state.total" layout="total, sizes, prev, pager, next, jumper" @size-change="state.pageSizeChangeHandle"
       @current-change="state.pageCurrentChangeHandle"> </el-pagination>
     <!-- 弹窗, 新增 / 修改 -->
-    <add-or-update ref="addOrUpdateRef" @refreshDataList="state.getDataList">确定</add-or-update>
+    <add-or-update ref="addOrUpdateRef" @refreshDataList="getInfo">确定</add-or-update>
 
     <el-dialog title="关联分类" v-model="cateRelationDialogVisible" width="50%">
       <div>
@@ -152,7 +152,7 @@ const addOrUpdateHandle = (id?: number) => {
 
 const brandTable = ref<InstanceType<typeof ElTable>>()
 
-const getInfo = () => {
+const getInfo = () => { //替换state.dataList
   // state.dataListLoading = true
   baseService.get("/product/brand/page").then((res) => {
     console.log("成功获取Brand data: ", res.data)

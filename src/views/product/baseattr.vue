@@ -14,15 +14,18 @@
             <el-button @click="query()">查询</el-button>
           </el-form-item>
           <el-form-item>
+            <el-button type="warning" @click="reset">重置</el-button>
+          </el-form-item>
+          <el-form-item>
             <el-button v-if="state.hasPermission('product:attr:save')" type="primary"
               @click="addOrUpdateHandle()">新增</el-button>
           </el-form-item>
           <el-form-item>
             <el-button v-if="state.hasPermission('product:attr:delete')" type="danger"
-              @click="state.deleteHandle()">删除</el-button>
+              @click="deleteBatch">删除</el-button>
           </el-form-item>
         </el-form>
-        <el-table ref="attr=Table" v-loading="state.dataListLoading" :data="state.dataList" border
+        <el-table ref="attrTable" v-loading="state.dataListLoading" :data="state.dataList" border
           @selection-change="state.dataListSelectionChangeHandle" style="width: 100%">
           <el-table-column type="selection" header-align="center" align="center"></el-table-column>
           <el-table-column prop="attrId" header-align="center" align="center" label="id" width="50"></el-table-column>
@@ -78,9 +81,9 @@
           <el-table-column label="操作" fixed="right" header-align="center" align="center" width="150">
             <template v-slot="scope">
               <el-button v-if="state.hasPermission('product:attr:update')" type="primary" link
-                @click="addOrUpdateHandle(scope.row)">修改</el-button>
+                @click="addOrUpdateHandle(scope.row.attrId)">修改</el-button>
               <el-button v-if="state.hasPermission('product:attr:delete')" type="primary" link
-                @click="state.deleteHandle(scope.row.attrId)">删除</el-button>
+                @click="deleteBatch()">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -88,8 +91,8 @@
           :total="state.total" layout="total, sizes, prev, pager, next, jumper"
           @size-change="state.pageSizeChangeHandle" @current-change="state.pageCurrentChangeHandle"> </el-pagination>
         <!-- 弹窗, 新增 / 修改 -->
-        <add-or-update ref="addOrUpdateRef" @refreshDataList="state.getDataList"
-          :treeData="treeDataRef">确定</add-or-update>
+        <add-or-update ref="addOrUpdateRef" @refreshDataList="getInfo" :treeData="treeDataRef"
+          :curCatId="curCatId">确定</add-or-update>
       </div>
     </el-col>
   </el-row>
@@ -116,6 +119,8 @@ interface Tree {
   label: string
   children?: Tree[]
 }
+
+const attrTable = ref<InstanceType<typeof ElTable>>()
 
 const treeDataRef = ref<Tree[]>([])
 const groupDataRef = ref([])
@@ -150,16 +155,18 @@ const groupProps = reactive({
 const state = reactive({ ...useView(view), ...toRefs(view) });
 
 const addOrUpdateRef = ref();
-const addOrUpdateHandle = (row?: any) => {
-  addOrUpdateRef.value.init(row.attrId)
+const addOrUpdateHandle = (id?: number) => {
+  addOrUpdateRef.value.init(id)
+  // console.log("打开增改", curCatId.value)
 }
 
 const getNodeHandle = (node: any) => {
+  curNode.value = node.name
+  curCatId.value = node.catId
   if (node.catLevel === 3) {
     baseService.get(`product/attr/page/${node.catId}`).then((res) => {
-      curNode.value = node.name
-      curCatId.value = node.catId
       ElMessage.success("获取数据成功!")
+      // console.log("catId", curCatId.value)
       state.dataList = res.data.list
       state.total = res.data.total
     }).catch(err => {
@@ -190,6 +197,50 @@ const getGroupData = () => {
     ElMessage.error("数据获取失败!")
     console.log("error", err)
   })
+}
+
+const getInfo = () => {
+  baseService.get(`product/attr/page/${curCatId.value}?key=${queryKey.value}`).then((res) => {
+    // ElMessage.success("获取数据成功!")
+    state.dataList = res.data.list
+    state.total = res.data.total
+  }).catch(err => {
+    ElMessage.error("获取数据失败!")
+  })
+  getGroupData()
+}
+
+const deleteBatch = () => {
+  let checkedAttr = attrTable.value!.getSelectionRows()
+  if (checkedAttr.length === 0) {
+    ElMessage.warning("请在左侧选择栏选择删除的表单项")
+    return
+  }
+  let ids = checkedAttr.map((attr: { attrId: number }) => attr.attrId)
+  ElMessageBox.confirm(`此操作将删除${ids.length === 1 ? ('商品规格参数【' + checkedAttr[0].attrName + '】') : (ids.length + '个商品规格参数')}，确定删除？`, '删除确认', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    baseService.delete("/product/attr", ids).then(() => {
+      getInfo()
+      ElMessage.success("删除规格参数成功！")
+      // console.log("***成功删除后state.dataList", state.dataList)
+    }).catch(() => {
+      getInfo()
+      ElMessage.error("删除规格参数失败！")
+    })
+  }).catch(() => {
+    ElMessage.info('已取消删除')
+  })
+}
+
+const reset = () => {
+  curNode.value = '无'
+  curCatId.value = 0
+  queryKey.value = ''
+  getInfo()
+  ElMessage.info("重置页面数据")
 }
 
 </script>

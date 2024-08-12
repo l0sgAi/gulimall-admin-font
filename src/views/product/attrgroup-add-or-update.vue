@@ -49,7 +49,8 @@ interface Tree {
 const emit = defineEmits(["refreshDataList"]);
 
 const props = defineProps({
-  treeData: { type: Array }
+  treeData: { type: Array },
+  curCatId: { type: Number },
 })
 
 const casProps = reactive({
@@ -65,7 +66,7 @@ const visible = ref(false);
 const dataFormRef = ref();
 
 const dataForm = reactive({
-  attrGroupId: '', attrGroupName: '', sort: 0, descript: '', icon: '', catelogId: 0
+  attrGroupId: '', attrGroupName: '', sort: 0, descript: '', icon: '', catelogId: props.curCatId
 })
 
 const rules = ref({
@@ -89,11 +90,16 @@ const rules = ref({
 const init = (attrGroupId?: number) => {
   visible.value = true
   dataForm.attrGroupId = ""
+  dataForm.attrGroupName = ""
+  dataForm.sort = 0
+  dataForm.descript = ''
+  dataForm.icon = ''
+  dataForm.catelogId = props.curCatId
 
   // 重置表单数据
-  if (dataFormRef.value) {
-    dataFormRef.value.resetFields();
-  }
+  // if (dataFormRef.value) {
+  //   dataFormRef.value.resetFields();
+  // }
 
   if (attrGroupId) {
     getInfo(attrGroupId);

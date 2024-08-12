@@ -11,11 +11,14 @@
                         <!-- <el-input v-show="curCatId === 0 ? false : true" v-model="queryKey"
                             placeholder="组名查询"></el-input> -->
                         <el-input v-model="queryKey" placeholder="组名查询"></el-input>
-
                     </el-form-item>
                     <el-form-item>
                         <!-- <el-button v-show="curCatId === 0 ? false : true" @click="query()">查询</el-button> -->
                         <el-button @click="query()">查询</el-button>
+                    </el-form-item>
+                    <el-form-item>
+                        <!-- <el-button v-show="curCatId === 0 ? false : true" @click="query()">查询</el-button> -->
+                        <el-button type="warning" @click="reset">重置</el-button>
                     </el-form-item>
                     <el-form-item>
                         <el-button v-if="state.hasPermission('product:attrgroup:save')" type="primary"
@@ -48,7 +51,7 @@
                             <el-button v-if="state.hasPermission('product:attrgroup:update')" type="primary" link
                                 @click="addOrUpdateHandle(scope.row.attrGroupId)">修改</el-button>
                             <el-button v-if="state.hasPermission('product:attrgroup:delete')" type="primary" link
-                                @click="state.deleteHandle(scope.row.attrGroupId)">删除</el-button>
+                                @click="deleteBatch()">删除</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -57,8 +60,8 @@
                     @size-change="state.pageSizeChangeHandle" @current-change="state.pageCurrentChangeHandle">
                 </el-pagination>
                 <!-- 弹窗, 新增 / 修改 -->
-                <add-or-update ref="addOrUpdateRef" :treeData="treeDataRef"
-                    @refreshDataList="state.getDataList">确定</add-or-update>
+                <add-or-update ref="addOrUpdateRef" :treeData="treeDataRef" :curCatId="curCatId"
+                    @refreshDataList="getInfo">确定</add-or-update>
             </div>
         </el-col>
     </el-row>
@@ -112,7 +115,7 @@ const state = reactive({ ...useView(view), ...toRefs(view) });
 
 const addOrUpdateRef = ref();
 const addOrUpdateHandle = (id?: number) => {
-    console.log("id: ", id)
+    // console.log("id: ", id)
     addOrUpdateRef.value.init(id)
 }
 
@@ -121,7 +124,7 @@ const getInfo = () => {
     baseService.get(`product/attrgroup/page/${curCatId.value}?key=${queryKey.value}`).then((res) => {
         state.dataList = res.data.list
         state.total = res.data.total
-        console.log("attrgroup.dataList: ", state.dataList)
+        // console.log("attrgroup.dataList: ", state.dataList)
     }).catch(() => {
         ElMessage.error("获取数据失败！")
     });
@@ -157,8 +160,13 @@ const query = () => {
 
 const deleteBatch = () => {
     let checkedAttrGroups = attrGroupTable.value!.getSelectionRows()
+    // console.log("checkedAttrGroups", checkedAttrGroups)
+    if (checkedAttrGroups.length === 0) {
+        ElMessage.warning("请在左侧选择栏选择删除的表单项")
+        return
+    }
     let ids = checkedAttrGroups.map((attrGroup: { attrGroupId: number }) => attrGroup.attrGroupId)
-    ElMessageBox.confirm(`此操作将删除${ids.length}个分组数据，确定删除？`, '删除确认', {
+    ElMessageBox.confirm(`此操作将删除${ids.length === 1 ? ('分组数据【' + checkedAttrGroups[0].attrGroupName + '】') : (ids.length + '个分组数据')}，确定删除？`, '删除确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning',
@@ -166,7 +174,7 @@ const deleteBatch = () => {
         baseService.delete("/product/attrgroup", ids).then(() => {
             getInfo()
             ElMessage.success("删除分组数据成功！")
-            console.log("***成功删除后state.dataList", state.dataList)
+            // console.log("***成功删除后state.dataList", state.dataList)
         }).catch(() => {
             getInfo()
             ElMessage.error("删除分组数据失败！")
@@ -174,6 +182,17 @@ const deleteBatch = () => {
     }).catch(() => {
         ElMessage.info('已取消删除')
     })
+}
+
+const reset = () => {
+    curNode.value = '无'
+    curCatId.value = 0
+    queryKey.value = ''
+    getInfo()
+}
+
+const deleteOne = (attrGroupId: string) => {
+    state.deleteHandle(attrGroupId)
 }
 </script>
 

@@ -72,8 +72,11 @@ const visible = ref(false)
 const dataFormRef = ref()
 
 const props = defineProps({
-  treeData: { type: Array }
+  treeData: { type: Array },
+  curCatId: { type: Number }
 })
+
+let pCatId = ref(props.curCatId)
 
 const casProps = reactive({
   value: 'catId',
@@ -99,7 +102,7 @@ const dataForm = reactive({
   valueSelectArray: [],
   attrType: '',
   enable: '',
-  catelogId: '',
+  catelogId: props.curCatId,
   groupName: '',
   showDesc: ''
 });
@@ -132,13 +135,24 @@ const rules = ref({
 });
 
 const init = (attrId?: number) => {
-  visible.value = true;
-  dataForm.attrId = "";
+  visible.value = true
+  dataForm.attrId = ""
+
+  dataForm.attrName = ""
+  dataForm.searchType = '',
+    dataForm.icon = '',
+    dataForm.valueSelect = '',
+    dataForm.valueSelectArray = [],
+    dataForm.attrType = '',
+    dataForm.enable = '',
+    dataForm.catelogId = props.curCatId,
+    dataForm.groupName = '',
+    dataForm.showDesc = ''
 
   // 重置表单数据
-  if (dataFormRef.value) {
-    dataFormRef.value.resetFields();
-  }
+  // if (dataFormRef.value) {
+  //   dataFormRef.value.resetFields();
+  // }
 
   if (attrId) {
     getInfo(attrId);
@@ -155,11 +169,15 @@ const getInfo = (attrId: number) => {
 // 表单提交
 const dataFormSubmitHandle = () => {
   dataForm.valueSelect = dataForm.valueSelectArray.join(';')
+  if (dataForm.groupName) {
+    dataForm.groupName = dataForm.groupName[0]
+  }
+  // console.log("dataForm", dataForm)
   dataFormRef.value.validate((valid: boolean) => {
     if (!valid) {
       return false;
     }
-    (!dataForm.attrId ? baseService.post : baseService.put)("/product/attr", dataForm).then((res) => {
+    (!dataForm.attrId ? baseService.post : baseService.put)("/product/attr", dataForm).then(() => {
       ElMessage.success({
         message: '成功',
         duration: 500,
@@ -196,4 +214,5 @@ const getCategoryAttrGroup = (curCatId: number) => {
 watch(() => dataForm.catelogId, (newValue) => {
   getCategoryAttrGroup(Number(newValue))
 })
+
 </script>
