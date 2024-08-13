@@ -10,6 +10,7 @@
         <el-switch v-model="dataForm.searchType" class="ml-2" inline-prompt
           style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="需要检索" inactive-text="不需要检索"
           :active-value="1" :inactive-value="0" />
+        <!-- <el-tag v-show="dataForm.attrType == '0'" type="info">不支持</el-tag> -->
       </el-form-item>
       <el-form-item label="属性图标" prop="icon">
         <SingleUpload :logo="dataForm.icon" @changeLogo="changeLogoHandle"></SingleUpload>
@@ -21,7 +22,7 @@
       </el-form-item>
       <el-form-item label="属性类型" prop="attrType">
         <el-select v-model="dataForm.attrType" placeholder="请选择">
-          <el-option label="规格参数" :value="1"></el-option>
+          <!-- <el-option label="规格参数" :value="1"></el-option> -->
           <el-option label="销售属性" :value="0"></el-option>
           <el-option label="规格参数和销售属性" :value="2"></el-option>
         </el-select>
@@ -117,7 +118,7 @@ const dataForm = reactive<DataForm>({
   catelogId: props.curCatId,
   groupName: '',
   showDesc: 0
-})
+});
 
 const rules = ref({
   attrName: [
@@ -148,9 +149,9 @@ const rules = ref({
 
 const init = (attrId?: number) => {
   visible.value = true
-  dataForm.attrId = ""
+  dataForm.attrId = ''
 
-  dataForm.attrName = ""
+  dataForm.attrName = ''
   dataForm.searchType = 0
   dataForm.icon = ''
   dataForm.valueSelect = ''
@@ -167,7 +168,7 @@ const init = (attrId?: number) => {
   // }
 
   if (attrId) {
-    getInfo(attrId);
+    getInfo(attrId)
   }
 };
 

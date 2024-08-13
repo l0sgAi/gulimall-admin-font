@@ -32,25 +32,28 @@
           <el-table-column prop="attrName" header-align="center" align="center" label="属性名"
             width="100"></el-table-column>
           <el-table-column v-if="attrtype == 1" prop="searchType" header-align="center" align="center" label="可检索"
-            width="70">
-            <template #default="scope">
-              <el-switch v-model="scope.row.searchType" class="ml-2" inline-prompt
-                style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="是" inactive-text="否"
-                :active-value="1" :inactive-value="0" disabled />
-            </template>
+            width="90" #default="scope">
+            <el-switch v-show="scope.row.attrType != '0'" v-model="scope.row.searchType" class="ml-2" inline-prompt
+              style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="是" inactive-text="否"
+              :active-value="1" :inactive-value="0" disabled />
+            <el-tag v-show="scope.row.attrType == '0'" type="info">不支持</el-tag>
           </el-table-column>
           <!-- <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
             <template #default="scope">
               <el-tag type="success" v-if="scope.row.valueType == 0">单选</el-tag>
               <el-tag v-else>多选</el-tag>
             </template>
-          </el-table-column> -->
+</el-table-column> -->
           <el-table-column prop="icon" header-align="center" align="center" label="图标" width="110" #default="scope">
             <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
           </el-table-column>
           <el-table-column prop="valueSelect" header-align="center" align="center" width="120" label="可选值">
             <template #default="scope">
               <el-tooltip placement="top">
+                <template #content>
+                  <div style="white-space: pre;">{{ scope.row.valueSelect.split(";").join("\n") }}
+                  </div>
+                </template>
                 <el-tag>{{ scope.row.valueSelect.split(";")[0] + "..." }}</el-tag>
               </el-tooltip>
             </template>
@@ -63,17 +66,20 @@
             </template>
           </el-table-column>
           <el-table-column prop="catelogName" header-align="center" align="center" label="所属分类" #default="scope">
-            <el-cascader v-model="scope.row.catelogId" :options="treeDataRef" :props="casProps">
+            <el-cascader placeholder="无" v-model="scope.row.catelogId" :options="treeDataRef" :props="casProps">
             </el-cascader>
           </el-table-column>
-          <el-table-column v-if="attrtype == 1" prop="groupName" header-align="center" align="center" label="所属分组"
-            #default="scope">
-            <el-cascader v-model="scope.row.groupName" :options="groupDataRef" :props="groupProps"></el-cascader>
-          </el-table-column>
-          <el-table-column v-if="attrtype == 1" prop="showDesc" header-align="center" align="center" label="快速展示"
-            width="70">
+          <el-table-column prop="groupName" header-align="center" align="center" label="所属分组">
             <template #default="scope">
-              <el-switch v-model="scope.row.showDesc" class="ml-2" inline-prompt
+              <el-tag v-show="scope.row.attrType == '0'" type="info">不支持</el-tag>
+              <el-cascader placeholder="无" v-if="scope.row.attrType != '0'" v-model="scope.row.groupName"
+                :options="groupDataRef" :props="groupProps"></el-cascader>
+            </template>
+          </el-table-column>
+          <el-table-column prop="showDesc" header-align="center" align="center" label="快速展示" width="90">
+            <template #default="scope">
+              <el-tag v-show="scope.row.attrType == '0'" type="info">不支持</el-tag>
+              <el-switch v-show="scope.row.attrType != '0'" v-model="scope.row.showDesc" class="ml-2" inline-prompt
                 style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="是" inactive-text="否"
                 :active-value="1" :inactive-value="0" disabled />
             </template>
