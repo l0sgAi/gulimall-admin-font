@@ -12,10 +12,13 @@
         </el-button>
         <el-button class="tools-div" type="danger" size="small" @click="deleteBatch">批量删除
         </el-button>
+        <br />
+        <el-input v-model="filterText" style="width: 240px" placeholder="输入分类名以过滤" />
+        <br />
         <el-tree v-loading="loading" style="max-width: 600px;margin-top: 12px;" :data="treeData" show-checkbox
             node-key="catId" :default-expanded-keys="expanded" :expand-on-click-node="false" :props="defaultProps"
             @node-click="handleNodeClick" :allow-drop="allowDrop" :draggable="draggable" @node-drop="handleDrop"
-            ref="menuTree">
+            ref="menuTree" :filter-node-method="filterNode">
             <template #default="{ node, data }">
                 <span class="custom-tree-node">
                     <span>{{ node.label }}</span>
@@ -73,7 +76,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue"
+import { onMounted, reactive, ref, watch } from "vue"
 import baseService from "@/service/baseService"
 import type Node from 'element-plus/es/components/tree/src/model/node'
 import { ElMessage, ElMessageBox, ElTree } from "element-plus"
@@ -84,6 +87,8 @@ const emit = defineEmits(["refreshDataList"]);
 onMounted(() => {
     getInfo()
 });
+
+const preUpdate = ref(false) //标志之前是否进行更新
 
 const draggable = ref(false)
 
@@ -114,6 +119,13 @@ const dataForm = reactive({
     productCount: 0
 });
 
+const filterText = ref('')
+
+const filterNode = (value: string, data: Tree) => {
+    if (!value) return true
+    return data.name.includes(value)
+}
+
 const dataFormRef = ref()
 
 const visible = ref(false)
@@ -123,9 +135,9 @@ let updateNodes = ref<NodeVo[]>([])
 
 interface Tree {
     [x: string]: any
-    id: number
-    label: string
-    children?: Tree[]
+    // id: number
+    // label: string
+    // children?: Tree[]
 }
 
 const menuTree = ref<InstanceType<typeof ElTree>>()
@@ -189,6 +201,7 @@ const append = (data: Tree) => {
 }
 
 const doUpdate = () => {
+    expanded.value = []
     dataFormRef.value.validate((valid: boolean) => {
         if (!valid) {
             ElMessage.error("数据格式错误!")
@@ -222,6 +235,7 @@ const addFirst = () => {
 
 // 表单提交
 const doAppend = () => {
+    expanded.value = []
     dataFormRef.value.validate((valid: boolean) => {
         if (!valid) {
             ElMessage.error("数据格式错误!")
@@ -257,6 +271,7 @@ const remove = (node: Node, data: Tree) => {
 
 const doRemove = (node: Node, data: Tree) => {
     const ids = [data.catId]
+    expanded.value = []
     baseService.delete("/product/category/delete", ids).then(() => {
         getInfo()
         console.log("成功删除分类数据: ", ids)
@@ -288,6 +303,10 @@ const countNodeLevel = (node: Node) => {
 }
 
 const handleDrop = (draggingNode: Node, dropNode: Node, type: string) => {
+    if (preUpdate.value === true) {
+        expanded.value = []
+        preUpdate.value = false
+    }
     let pCid = 0
     let sibilings = null
     let catLevel = 0
@@ -345,17 +364,18 @@ const updateChildNodeLevel = (node: Node, catLevel: number) => {
 }
 
 const saveUpdateBatch = () => {
+    preUpdate.value === false ? preUpdate.value = true : preUpdate.value = false
     baseService.put("/product/category/update/sort", updateNodes.value).then(() => {
         ElMessage.success("修改分类成功！")
         getInfo()
-        console.log("批量修改分类成功！", updateNodes)
+        // console.log("批量修改分类成功！", updateNodes)
         updateNodes.value = [] //重置更新节点列表
     }).catch(() => {
         ElMessage.error("批量修改分类失败！")
         getInfo()
         updateNodes.value = [] //重置更新节点列表
     })
-    console.log("展开列表", expanded.value)
+    // console.log("展开列表", expanded.value)
 }
 
 const deleteBatch = () => {
@@ -384,11 +404,17 @@ const reset = () => {
     getInfo()
     expanded.value = [] //重置展开列表
     updateNodes.value = [] //重置更新节点列表
+    filterText.value = '' //重置过滤文本
 }
 
 const changeLogoHandle = (logo: string) => {
     dataForm.icon = logo
 }
+
+watch(filterText, (val) => {
+    // console.log("值改变!", val)
+    menuTree.value!.filter(val)
+})
 </script>
 
 <style>

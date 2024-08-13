@@ -1,12 +1,13 @@
 <template>
+    <el-input v-model="filterText" style="width: 240px;margin-top: 12px;" placeholder="输入分类名以过滤" />
     <el-tree v-loading="loading" style="max-width: 600px;margin-top: 12px;" :data="treeData" node-key="catId"
-        :default-expanded-keys="expanded" :expand-on-click-node="false" :props="defaultProps"
-        @node-click="handleNodeClick" ref="menuTree">
+        :default-expanded-keys="expanded" :filter-node-method="filterNode" :expand-on-click-node="false"
+        :props="defaultProps" @node-click="handleNodeClick" ref="menuTreeRef">
     </el-tree>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from "vue"
+import { onMounted, ref, watch } from "vue"
 import baseService from "@/service/baseService"
 import { ElMessage, ElTree } from "element-plus"
 import { RefSymbol } from "@vue/reactivity";
@@ -26,20 +27,23 @@ onMounted(() => {
 })
 
 interface Tree {
-    [x: string]: any
-    id: number
-    label: string
-    children?: Tree[]
+    [key: string]: any
+    // id: number
+    // label: string
+    // children?: Tree[]
 }
+
+const filterText = ref('')
 
 const defaultProps = {
     children: 'children',
     label: 'name',
 }
 
-let expanded = ref<number[]>([])
-let treeData = ref<Tree[]>([])
-let loading = ref(true) // 控制加载状态的变量
+const expanded = ref<number[]>([])
+const treeData = ref<Tree[]>([])
+const menuTreeRef = ref<InstanceType<typeof ElTree>>()
+const loading = ref(true) // 控制加载状态的变量
 
 const getInfo = () => {
     loading.value = true
@@ -57,6 +61,16 @@ const getInfo = () => {
 const handleNodeClick = (node: any) => {
     emitInput(node)
 }
+
+const filterNode = (value: string, data: Tree) => {
+    if (!value) return true
+    return data.name.includes(value)
+}
+
+watch(filterText, (val) => {
+    // console.log("值改变!", val)
+    menuTreeRef.value!.filter(val)
+})
 </script>
 
 <style>
