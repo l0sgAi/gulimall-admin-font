@@ -33,11 +33,12 @@
                 <el-table ref="attrGroupTable" v-loading="state.dataListLoading" :data="state.dataList" border
                     @selection-change="state.dataListSelectionChangeHandle" style="width: 100%">
                     <el-table-column type="selection" header-align="center" align="center" width="50"></el-table-column>
-                    <el-table-column prop="attrGroupId" label="分组id" header-align="center"
-                        align="center"></el-table-column>
+                    <el-table-column prop="attrGroupId" label="分组id" header-align="center" align="center"
+                        width="70"></el-table-column>
                     <el-table-column prop="attrGroupName" label="组名" header-align="center"
                         align="center"></el-table-column>
-                    <el-table-column prop="sort" label="排序" header-align="center" align="center"></el-table-column>
+                    <el-table-column prop="sort" label="排序" header-align="center" align="center"
+                        width="70"></el-table-column>
                     <el-table-column prop="descript" label="描述" header-align="center" align="center"></el-table-column>
                     <el-table-column prop="icon" label="组图标" header-align="center" align="center" #default="scope">
                         <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
@@ -46,12 +47,14 @@
                         #default="scope">
                         <el-cascader v-model="scope.row.catelogId" :options="treeDataRef" :props="casProps" />
                     </el-table-column>
-                    <el-table-column label="操作" fixed="right" header-align="center" align="center" width="150">
+                    <el-table-column label="操作" fixed="right" header-align="center" align="center" width="200">
                         <template v-slot="scope">
                             <el-button v-if="state.hasPermission('product:attrgroup:update')" type="primary" link
                                 @click="addOrUpdateHandle(scope.row.attrGroupId)">修改</el-button>
                             <el-button v-if="state.hasPermission('product:attrgroup:delete')" type="primary" link
                                 @click="deleteBatch()">删除</el-button>
+                            <el-button type="warning" link
+                                @click="handleGroupRelation(scope.row.attrGroupId)">关联分类</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -65,6 +68,24 @@
             </div>
         </el-col>
     </el-row>
+
+    <el-dialog title="分组规格" v-model="groupRelationDialogVisible" width="50%">
+        <div>
+            <!-- <el-button style="margin-bottom: 12px;" type="primary" @click="addOrUpdateRelation()">新增关联</el-button> -->
+            <el-button style="margin-bottom: 12px;" type="danger" @click="deleteRelation()">删除所选关联</el-button>
+        </div>
+        <el-table @selection-change="relationSelectionChangeHandle" ref="attrAttrGroupTable" v-loading="relationLoading"
+            :data="curGroupRelations" border style="width: 90%">
+            <el-table-column type="selection" header-align="center" align="center" width="50" />
+            <el-table-column prop="id" label="id" header-align="center" align="center"></el-table-column>
+            <el-table-column prop="attrGroupName" label="分组" header-align="center" align="center"></el-table-column>
+            <el-table-column prop="attrName" label="规格参数" header-align="center" align="center"></el-table-column>
+        </el-table>
+        <template #footer>
+            <el-button @click="groupRelationDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="groupRelationSubmitHandle()">确定</el-button>
+        </template>
+    </el-dialog>
 </template>
 
 <script lang="ts" setup>
@@ -96,12 +117,16 @@ interface Tree {
 }
 
 const attrGroupTable = ref<InstanceType<typeof ElTable>>()
-
+const relationSelection = ref<any[]>([])
 const treeDataRef = ref<Tree[]>([])
 
 let curNode = ref<string>('无')
 let curCatId = ref<number>(0)
 let queryKey = ref<string>('')
+
+const groupRelationDialogVisible = ref(false)
+const relationLoading = ref(false)
+const curGroupRelations = ref([])
 
 const view = reactive({
     deleteIsBatch: true,
@@ -159,13 +184,13 @@ const query = () => {
 }
 
 const deleteBatch = () => {
-    let checkedAttrGroups = attrGroupTable.value!.getSelectionRows()
+    const checkedAttrGroups = attrGroupTable.value!.getSelectionRows()
     // console.log("checkedAttrGroups", checkedAttrGroups)
     if (checkedAttrGroups.length === 0) {
         ElMessage.warning("请在左侧选择栏选择删除的表单项")
         return
     }
-    let ids = checkedAttrGroups.map((attrGroup: { attrGroupId: number }) => attrGroup.attrGroupId)
+    const ids = checkedAttrGroups.map((attrGroup: { attrGroupId: number }) => attrGroup.attrGroupId)
     ElMessageBox.confirm(`此操作将删除${ids.length === 1 ? ('分组数据【' + checkedAttrGroups[0].attrGroupName + '】') : (ids.length + '个分组数据')}，确定删除？`, '删除确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -191,8 +216,59 @@ const reset = () => {
     getInfo()
 }
 
-const deleteOne = (attrGroupId: string) => {
-    state.deleteHandle(attrGroupId)
+// const deleteOne = (attrGroupId: string) => {
+//     state.deleteHandle(attrGroupId)
+// }
+
+const handleGroupRelation = (attrGroupId: number) => {
+    relationLoading.value = true
+    baseService.get(`product/attrattrgrouprelation/getGroupRelation/${attrGroupId}`).then((res) => {
+        curGroupRelations.value = res.data
+        groupRelationDialogVisible.value = true
+        relationLoading.value = false
+    }).catch(err => {
+        ElMessage.error("数据获取失败!")
+        relationLoading.value = false
+    })
+    relationLoading.value = false
+}
+
+const deleteRelation = () => {
+    // console.log("checkedAttrGroups", checkedAttrGroups)
+    if (relationSelection.value.length === 0) {
+        ElMessage.warning("请在左侧选择栏选择删除的表单项")
+        return
+    }
+    const ids = relationSelection.value.map((relation: { id: number }) => relation.id)
+    const curAttrGroupId = relationSelection.value[0].attrGroupId
+    ElMessageBox.confirm(`此操作将删除${ids.length === 1 ?
+        ('分组关联数据【' + relationSelection.value[0].attrGroupName + ' : '
+            + relationSelection.value[0].attrName + '】') : (ids.length + '个分组关联数据')}，确定删除？`, '删除确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+    }).then(() => {
+        baseService.delete("/product/attrattrgrouprelation", ids).then(() => {
+            handleGroupRelation(curAttrGroupId)
+            ElMessage.success("删除分组关联数据成功！")
+            // console.log("***成功删除后state.dataList", state.dataList)
+        }).catch(() => {
+            handleGroupRelation(curAttrGroupId)
+            ElMessage.error("删除分组关联数据失败！")
+        })
+    }).catch(() => {
+        ElMessage.info('已取消删除')
+    })
+}
+
+const groupRelationSubmitHandle = () => {
+    ElMessage.info("保存更改")
+    groupRelationDialogVisible.value = false
+}
+
+const relationSelectionChangeHandle = (val: []) => {
+    relationSelection.value = val
+    // console.log("relationSelectionChangeHandle", relationSelection.value)
 }
 </script>
 
