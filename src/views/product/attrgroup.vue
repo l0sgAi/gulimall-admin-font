@@ -53,8 +53,7 @@
                                 @click="addOrUpdateHandle(scope.row.attrGroupId)">修改</el-button>
                             <el-button v-if="state.hasPermission('product:attrgroup:delete')" type="primary" link
                                 @click="deleteBatch()">删除</el-button>
-                            <el-button type="warning" link
-                                @click="handleGroupRelation(scope.row.attrGroupId)">关联分类</el-button>
+                            <el-button type="warning" link @click="handleGroupRelation(scope.row)">关联分类</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -73,6 +72,7 @@
         <div>
             <!-- <el-button style="margin-bottom: 12px;" type="primary" @click="addOrUpdateRelation()">新增关联</el-button> -->
             <el-button style="margin-bottom: 12px;" type="danger" @click="deleteRelation()">删除所选关联</el-button>
+            <el-button style="margin-bottom: 12px;" type="primary" @click="addRelation()">新增关联</el-button>
         </div>
         <el-table @selection-change="relationSelectionChangeHandle" ref="attrAttrGroupTable" v-loading="relationLoading"
             :data="curGroupRelations" border style="width: 90%">
@@ -80,11 +80,63 @@
             <el-table-column prop="id" label="id" header-align="center" align="center"></el-table-column>
             <el-table-column prop="attrGroupName" label="分组" header-align="center" align="center"></el-table-column>
             <el-table-column prop="attrName" label="规格参数" header-align="center" align="center"></el-table-column>
+            <el-table-column prop="valueSelect" header-align="center" align="center" width="120" label="可选值">
+                <template #default="scope">
+                    <el-tooltip placement="top">
+                        <template #content>
+                            <div style="white-space: pre;">{{ scope.row.valueSelect.split(";").join("\n") }}
+                            </div>
+                        </template>
+                        <el-tag>{{ scope.row.valueSelect.split(";")[0] + "..." }}</el-tag>
+                    </el-tooltip>
+                </template>
+            </el-table-column>
         </el-table>
         <template #footer>
             <el-button @click="groupRelationDialogVisible = false">取消</el-button>
             <el-button type="primary" @click="groupRelationSubmitHandle()">确定</el-button>
         </template>
+    </el-dialog>
+
+    <el-dialog title="选择属性" v-model="attrDialogVisible" width="50%">
+        <el-form :inline="true">
+            <el-form-item>
+                <el-input v-model="relationQueryKey" placeholder="属性名查询" width="120"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="queryNoneRelation()">查询</el-button>
+            </el-form-item>
+        </el-form>
+        <el-table ref="attrTable" v-loading="attrDialogLoading" :data="attrPage.list" border
+            @selection-change="attrSelectionChangeHandle" style="width: 100%">
+            <el-table-column type="selection" header-align="center" align="center"></el-table-column>
+            <el-table-column prop="attrId" header-align="center" align="center" label="id"></el-table-column>
+            <el-table-column prop="attrName" header-align="center" align="center" label="属性名"
+                width="100"></el-table-column>
+            <el-table-column prop="icon" header-align="center" align="center" label="图标" #default="scope">
+                <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
+            </el-table-column>
+            <el-table-column prop="valueSelect" header-align="center" align="center" label="可选值">
+                <template #default="scope">
+                    <el-tooltip placement="top">
+                        <template #content>
+                            <div style="white-space: pre;">{{ scope.row.valueSelect.split(";").join("\n") }}
+                            </div>
+                        </template>
+                        <el-tag>{{ scope.row.valueSelect.split(";")[0] + "..." }}</el-tag>
+                    </el-tooltip>
+                </template>
+            </el-table-column>
+        </el-table>
+        <template #footer>
+            <el-button @click="attrDialogVisible = false">取消</el-button>
+            <el-button type="primary" v-if="attrSelection.length > 0"
+                @click="attrRelationSubmitHandle()">确认新增</el-button>
+        </template>
+        <el-pagination :current-page="attrPage.page" :page-sizes="[10, 20, 50, 100]" :page-size="attrPage.limit"
+            :total="attrPage.total" layout="total, sizes, prev, pager, next, jumper"
+            @size-change="attrPageSizeChangeHandle" @current-change="attrPageCurrentChangeHandle"> </el-pagination>
+        <!-- 弹窗, 新增 / 修改 -->
     </el-dialog>
 </template>
 
@@ -100,6 +152,31 @@ import { ElTable } from 'element-plus'
 onMounted(() => {
     getTreeData
 })
+
+const attrSelection = ref<any[]>([])
+
+const curAttrGroupId = ref(0)
+
+interface Page {
+    total: number;
+    list: any[];
+    page: number;
+    limit: number;
+}
+
+const relationCatId = ref(0)
+const relationQueryKey = ref('')
+
+const attrPage = reactive<Page>({
+    total: 0,
+    list: [],
+    page: 1,
+    limit: 10
+})
+
+const attrDialogVisible = ref(false)
+
+const attrDialogLoading = ref(false)
 
 const casProps = reactive({
     value: 'catId',
@@ -120,9 +197,9 @@ const attrGroupTable = ref<InstanceType<typeof ElTable>>()
 const relationSelection = ref<any[]>([])
 const treeDataRef = ref<Tree[]>([])
 
-let curNode = ref<string>('无')
-let curCatId = ref<number>(0)
-let queryKey = ref<string>('')
+const curNode = ref<string>('无')
+const curCatId = ref<number>(0)
+const queryKey = ref<string>('')
 
 const groupRelationDialogVisible = ref(false)
 const relationLoading = ref(false)
@@ -220,7 +297,13 @@ const reset = () => {
 //     state.deleteHandle(attrGroupId)
 // }
 
-const handleGroupRelation = (attrGroupId: number) => {
+const handleGroupRelation = (row: any) => { //获取对应行信息
+    relationCatId.value = row.catelogId
+    curAttrGroupId.value = row.attrGroupId
+    getGroupRelation(row.attrGroupId)
+}
+
+const getGroupRelation = (attrGroupId: number) => { //刷新分组下已经分配的关联数据
     relationLoading.value = true
     baseService.get(`product/attrattrgrouprelation/getGroupRelation/${attrGroupId}`).then((res) => {
         curGroupRelations.value = res.data
@@ -240,7 +323,6 @@ const deleteRelation = () => {
         return
     }
     const ids = relationSelection.value.map((relation: { id: number }) => relation.id)
-    const curAttrGroupId = relationSelection.value[0].attrGroupId
     ElMessageBox.confirm(`此操作将删除${ids.length === 1 ?
         ('分组关联数据【' + relationSelection.value[0].attrGroupName + ' : '
             + relationSelection.value[0].attrName + '】') : (ids.length + '个分组关联数据')}，确定删除？`, '删除确认', {
@@ -249,11 +331,11 @@ const deleteRelation = () => {
         type: 'warning',
     }).then(() => {
         baseService.delete("/product/attrattrgrouprelation", ids).then(() => {
-            handleGroupRelation(curAttrGroupId)
+            getGroupRelation(curAttrGroupId.value)
             ElMessage.success("删除分组关联数据成功！")
             // console.log("***成功删除后state.dataList", state.dataList)
         }).catch(() => {
-            handleGroupRelation(curAttrGroupId)
+            getGroupRelation(curAttrGroupId.value)
             ElMessage.error("删除分组关联数据失败！")
         })
     }).catch(() => {
@@ -269,6 +351,65 @@ const groupRelationSubmitHandle = () => {
 const relationSelectionChangeHandle = (val: []) => {
     relationSelection.value = val
     // console.log("relationSelectionChangeHandle", relationSelection.value)
+}
+
+const attrSelectionChangeHandle = (val: []) => {
+    attrSelection.value = val
+    // console.log("relationSelectionChangeHandle", relationSelection.value)
+}
+
+const getNoneRelationData = () => { //刷新对应分类分组未分配的规格数据
+    baseService.get(`product/attr/base/noRelation/page/${relationCatId.value}?key=${relationQueryKey.value}`).then((res) => {
+        // ElMessage.success("获取数据成功!")
+        attrPage.list = res.data.list
+        attrPage.total = res.data.total
+    }).catch(err => {
+        ElMessage.error("获取数据失败!")
+    })
+}
+
+const addRelation = () => {
+    attrDialogVisible.value = true
+    relationQueryKey.value = ''
+    getNoneRelationData()
+}
+
+const queryNoneRelation = () => {
+    baseService.get(`product/attr/base/noRelation/page/${relationCatId.value}?key=${relationQueryKey.value}`).then((res) => {
+        ElMessage.success("查询成功!")
+        attrPage.list = res.data.list
+        attrPage.total = res.data.total
+    }).catch(err => {
+        ElMessage.error("查询失败!")
+    })
+}
+
+const attrRelationSubmitHandle = () => {
+    console.log("attrSelection.value", attrSelection.value)
+    const attrAttrGroupSelection = ref(attrSelection.value.map(attr => ({
+        ...attr,
+        attrGroupId: curAttrGroupId.value,
+        attrSort: 0
+    })))
+    console.log("attrAttrGroupSelection", attrAttrGroupSelection.value)
+
+    baseService.post(`product/attrattrgrouprelation/saveBatch`, attrAttrGroupSelection.value).then((res) => {
+        ElMessage.success("保存分组关联成功!")
+        getNoneRelationData() //刷新对应分类分组未分配的规格数据
+        getGroupRelation(curAttrGroupId.value) //刷新分组下已经分配的关联数据
+    }).catch(err => {
+        ElMessage.error("保存分组关联失败!")
+        getNoneRelationData()
+        getGroupRelation(curAttrGroupId.value)
+    })
+}
+
+const attrPageSizeChangeHandle = (val: number) => {
+    attrPage.limit = val
+}
+
+const attrPageCurrentChangeHandle = (val: number) => {
+    attrPage.page = val
 }
 </script>
 

@@ -180,13 +180,12 @@ const getInfo = (attrId: number) => {
 
 // 表单提交
 const dataFormSubmitHandle = () => {
-
   if (dataForm.attrType == '0') {
     dataForm.searchType = ''
     dataForm.showDesc = ''
     dataForm.groupName = ''
   }
-  if (dataForm.valueSelect)
+  if (dataForm.valueSelectArray)
     dataForm.valueSelect = dataForm.valueSelectArray.join(';')
   if (dataForm.groupName)
     dataForm.groupName = dataForm.groupName[0]
