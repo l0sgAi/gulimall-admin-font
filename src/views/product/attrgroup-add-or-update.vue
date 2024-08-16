@@ -39,13 +39,6 @@ import baseService from "@/service/baseService";
 import { ElMessage } from "element-plus";
 import SingleUpload from "@/upload/singleUpload.vue"
 
-interface Tree {
-  [x: string]: any
-  id: number
-  label: string
-  children?: Tree[]
-}
-
 const emit = defineEmits(["refreshDataList"]);
 
 const props = defineProps({

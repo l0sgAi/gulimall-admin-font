@@ -39,11 +39,6 @@ const imageName = computed(() => {
 
 const fileList = ref([{ name: imageName.value, url: imageUrl.value }])
 
-// const showFileList = computed({
-//     get: () => props.logo !== null && props.logo !== '' && props.logo !== undefined,
-//     set: (newValue) => { }
-// })
-
 const dataObj = ref({
     policy: '',
     signature: '',

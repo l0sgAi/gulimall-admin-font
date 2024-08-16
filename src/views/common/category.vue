@@ -10,7 +10,6 @@
 import { onMounted, ref, watch } from "vue"
 import baseService from "@/service/baseService"
 import { ElMessage, ElTree } from "element-plus"
-import { RefSymbol } from "@vue/reactivity";
 
 const emit = defineEmits(["categoryData", "categoryTree"])
 
@@ -55,7 +54,7 @@ const getInfo = () => {
     }).catch(() => {
         ElMessage.error("获取分类数据失败！")
         loading.value = false // 如果请求失败，也关闭加载状态
-    });
+    })
 };
 
 const handleNodeClick = (node: any) => {

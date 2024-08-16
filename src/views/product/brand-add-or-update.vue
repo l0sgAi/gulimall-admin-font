@@ -37,6 +37,7 @@ import { reactive, ref, onMounted } from "vue"
 import baseService from "@/service/baseService"
 import { ElMessage } from "element-plus"
 import SingleUpload from "@/upload/singleUpload.vue"
+// import MultiUpload from "@/upload/multiUpload.vue"
 
 const emit = defineEmits(["refreshDataList"])
 const visible = ref(false);

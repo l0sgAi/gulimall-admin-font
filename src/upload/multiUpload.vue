@@ -1,103 +1,96 @@
 <template>
     <div>
-        <el-upload action="http://gulimall.oss-cn-shanghai.aliyuncs.com" :data="dataObj" list-type="picture-card"
-            :file-list="fileList" :before-upload="beforeUpload" :on-remove="handleRemove"
-            :on-success="handleUploadSuccess" :on-preview="handlePreview" :limit="maxCount" :on-exceed="handleExceed">
-            <i class="el-icon-plus"></i>
+        <el-upload class="avatar-uploader" action="http://gulimall-losgai.oss-cn-nanjing.aliyuncs.com" :data="dataObj"
+            list-type="picture-card" :multiple="true" :show-file-list="true" :file-list="fileList"
+            :before-upload="beforeUpload" :on-remove="handleRemove" :on-success="handleUploadSuccess"
+            :on-preview="handlePictureCardPreview">
+            <el-icon>
+                <Plus />
+            </el-icon>
         </el-upload>
-        <el-dialog :model-value="dialogVisible" @update:model-value="dialogVisible = $event">
-            <img width="100%" :src="dialogImageUrl" alt />
+        <el-dialog v-model="dialogVisible">
+            <img w-full :src="dialogImageUrl" alt="Preview Image" />
         </el-dialog>
     </div>
 </template>
 
-<script setup>
-import { ref, computed, watch } from 'vue';
-import { policy } from "./policy";
-import { getUUID } from '@/utils';
-import { ElMessage } from 'element-plus';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue'
+import { ElMessage } from 'element-plus'
+import baseService from "@/service/baseService"
+import { getUuid } from '@/utils/utils'
 
 const props = defineProps({
-    value: Array,
-    maxCount: {
-        type: Number,
-        default: 30
+    logos: {
+        type: Array,
+        default: () => [],
     }
-});
+})
+
+const dialogImageUrl = ref('')
+
+const dialogVisible = ref(false)
+
+const emit = defineEmits(['changeLogos'])
+
+const fileList = ref(props.logos.map((logo: string) => ({ name: logo, url: logo })))
 
 const dataObj = ref({
-    policy: "",
-    signature: "",
-    key: "",
-    ossaccessKeyId: "",
-    dir: "",
-    host: "",
-    uuid: ""
-});
-const dialogVisible = ref(false);
-const dialogImageUrl = ref(null);
-
-const fileList = computed(() => {
-    let fileList = [];
-    for (let i = 0; i < props.value.length; i++) {
-        fileList.push({ url: props.value[i] });
-    }
-    return fileList;
+    policy: '',
+    signature: '',
+    key: '',
+    OSSAccessKeyId: '',
+    dir: '',
+    host: '',
 });
 
-const emit = defineEmits(['input']);
+const emitInput = (val: string[]) => {
+    emit('changeLogos', val)
+}
 
-const emitInput = (fileList) => {
-    let value = fileList.map(file => file.url);
-    emit('input', value);
-};
+const handleRemove = (file: any, updatedFileList: any) => {
+    fileList.value = updatedFileList;
+    emitInput(fileList.value.map(file => file.url))
+    // console.log("文件被移除", fileList.value)
+}
 
-const handleRemove = (file, fileList) => {
-    emitInput(fileList);
-};
-
-const handlePreview = (file) => {
-    dialogVisible.value = true;
-    dialogImageUrl.value = file.url;
-};
-
-const beforeUpload = (file) => {
-    return new Promise((resolve, reject) => {
-        policy().then(response => {
-            dataObj.value.policy = response.data.policy;
-            dataObj.value.signature = response.data.signature;
-            dataObj.value.ossaccessKeyId = response.data.accessid;
-            dataObj.value.key = response.data.dir + "/" + getUUID() + "_${filename}";
-            dataObj.value.dir = response.data.dir;
-            dataObj.value.host = response.data.host;
-            resolve(true);
-        }).catch(err => {
-            reject(false);
-        });
-    });
-};
-
-const handleUploadSuccess = (res, file) => {
-    fileList.value.push({
-        name: file.name,
-        url: dataObj.value.host + "/" + dataObj.value.key.replace("${filename}", file.name)
-    });
-    emitInput(fileList.value);
-};
-
-const handleExceed = (files, fileList) => {
-    ElMessage({
-        message: `最多只能上传${props.maxCount}张图片`,
-        type: 'warning',
-        duration: 1000
-    });
-};
-
-watch(() => props.value, (newValue) => {
-    if (!newValue.length) {
-        fileList.value = [];
+const beforeUpload = async (file: any) => {
+    try {
+        const response = await baseService.get('/thirdparty/oss/policy');
+        dataObj.value = {
+            policy: response.data.policy,
+            signature: response.data.signature,
+            OSSAccessKeyId: response.data.accessid,
+            key: response.data.dir + getUuid() + '_${filename}',
+            dir: response.data.dir,
+            host: response.data.host,
+        };
+        return true;
+    } catch (err) {
+        ElMessage.error('上传图片失败!');
+        return false;
     }
-}, { deep: true });
+}
+
+const handleUploadSuccess = (response: any, file: any) => {
+    ElMessage.success('上传图片成功!')
+    const newUrl = dataObj.value.host + '/' + dataObj.value.key.replace("${filename}", file.name)
+    fileList.value.push({ name: file.name, url: newUrl })
+    emitInput(fileList.value.map(file => file.url))
+}
+
+const handlePictureCardPreview: UploadProps['onPreview'] = (uploadFile) => {
+    dialogImageUrl.value = uploadFile.url!
+    dialogVisible.value = true
+}
+
+watch(() => props.logos, (newLogos) => {
+    fileList.value = newLogos.map(logo => ({ name: logo, url: logo }))
+}, { deep: true })
+
+// watch(() => fileList, (newLogos) => {
+//     console.log("文件列表 变化", fileList.value)
+// }, { deep: true })
 </script>
 
 <style></style>
