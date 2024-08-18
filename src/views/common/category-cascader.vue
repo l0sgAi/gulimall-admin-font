@@ -8,7 +8,8 @@
           由于有sync修饰符，所以cascader路径变化以后自动会修改父的catelogPath，这是结合子组件this.$emit("update:catelogPath",v);做的
       -->
   <div>
-    <el-cascader filterable clearable placeholder="搜索分类" v-model="paths" :options="categorys" :props="settings">
+    <el-cascader filterable clearable placeholder="搜索分类" v-model="paths" :options="categorys" :props="settings"
+      style="width: 300px;">
       <template #default="{ node, data }">
         <span>{{ data.name }}</span>
         <span v-if="!node.isLeaf"> ({{ data.children.length }}) </span>
@@ -18,9 +19,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ref, onMounted, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import baseService from "@/service/baseService"
+import PubSub from 'pubsub-js'
 
 onMounted(() => {
   getCategorys()
@@ -33,13 +35,11 @@ interface Tree {
   children?: Tree[]
 }
 
-const props = withDefaults(defineProps<{
-  catelogPath: number[];
-}>(), {
-  catelogPath: () => []
-});
+const props = defineProps({
+  catelogPath: { type: Array as () => number[] }
+})
 
-const paths = ref<number[]>(props.catelogPath)
+const paths = ref<number[] | undefined>(props.catelogPath)
 
 const settings = {
   value: 'catId',
@@ -51,8 +51,8 @@ const categorys = ref<Tree[]>([]);
 
 const getCategorys = () => {
   baseService.get("/product/category/page/tree").then((res: any) => {
-    console.log("成功获取Tree data: ", res.data)
-    categorys.value = res.dataForm
+    // console.log("成功获取Tree data: ", res.data)
+    categorys.value = res.data
   }).catch(() => {
     ElMessage.error("获取分类数据失败！")
   })
@@ -64,7 +64,9 @@ watch(() => props.catelogPath, (newVal) => {
 )
 
 watch(() => paths.value, (newValue) => {
+  // console.log("catPath: ", paths.value, newValue, categorys.value)
   emit('update:catelogPath', newValue)
+  PubSub.publish('catPath', newValue)
 })
 
 const emit = defineEmits(['update:catelogPath']);

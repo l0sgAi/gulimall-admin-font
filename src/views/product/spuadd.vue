@@ -20,44 +20,43 @@
               <el-input v-model="spu.spuDescription"></el-input>
             </el-form-item>
             <el-form-item label="选择分类" prop="catalogId">
-              <category-cascader></category-cascader>
+              <category-cascader @update:catelogPath="catelogChangeHandle"></category-cascader>
             </el-form-item>
             <el-form-item label="选择品牌" prop="brandId">
-              <brand-select></brand-select>
+              <brand-select @changeBrand="brandChangeHandle"></brand-select>
             </el-form-item>
             <el-form-item label="商品重量(Kg)" prop="weight">
               <el-input-number v-model.number="spu.weight" :min="0" :precision="3" :step="0.1"></el-input-number>
             </el-form-item>
             <el-form-item label="设置积分" prop="bounds">
-              <label>金币</label>
+              <label style="margin-right:15px">金币</label>
               <el-input-number style="width:130px" placeholder="金币" v-model="spu.bounds.buyBounds" :min="0"
                 controls-position="right"></el-input-number>
-              <label style="margin-left:15px">成长值</label>
+              <label style="margin-left:30px;margin-right:15px">成长值</label>
               <el-input-number style="width:130px" placeholder="成长值" v-model="spu.bounds.growBounds" :min="0"
                 controls-position="right">
                 <template slot="prepend">成长值</template>
               </el-input-number>
             </el-form-item>
             <el-form-item label="商品介绍" prop="decript">
-              <multi-upload v-model="spu.decript"></multi-upload>
+              <multi-upload @changeLogos="decriptChangeHandle"></multi-upload>
             </el-form-item>
-
             <el-form-item label="商品图集" prop="images">
-              <multi-upload v-model="spu.images"></multi-upload>
+              <multi-upload @changeLogos="imagesChangeHandle" :limit="10"></multi-upload>
             </el-form-item>
             <el-form-item>
-              <el-button type="success" @click="collectSpuBaseInfo">下一步：设置基本参数</el-button>
+              <el-button type="success" @click="collectSpuBaseInfo()">下一步：设置基本参数</el-button>
             </el-form-item>
           </el-form>
         </el-card>
       </el-col>
       <el-col :span="24" v-show="step == 1">
         <el-card class="box-card" style="width:80%;margin:20px auto">
-          <el-tabs tab-position="left" style="width:98%">
+          <!-- <el-tabs tab-position="left" style="width:98%">
             <el-tab-pane :label="group.attrGroupName" v-for="(group, gidx) in dataResp.attrGroups"
-              :key="group.attrGroupId">
-              <!-- 遍历属性,每个tab-pane对应一个表单，每个属性是一个表单项  spu.baseAttrs[0] = [{attrId:xx,val:}]-->
-              <el-form ref="form" :model="spu">
+              :key="group.attrGroupId"> -->
+          <!-- 遍历属性,每个tab-pane对应一个表单，每个属性是一个表单项  spu.baseAttrs[0] = [{attrId:xx,val:}]-->
+          <!-- <el-form ref="form" :model="spu">
                 <el-form-item :label="attr.attrName" v-for="(attr, aidx) in group.attrs" :key="attr.attrId">
                   <el-input v-model="dataResp.baseAttrs[gidx][aidx].attrId" type="hidden" v-show="false"></el-input>
                   <el-select v-model="dataResp.baseAttrs[gidx][aidx].attrValues" :multiple="attr.valueType == 1"
@@ -70,7 +69,7 @@
                 </el-form-item>
               </el-form>
             </el-tab-pane>
-          </el-tabs>
+          </el-tabs> -->
           <div style="margin:auto">
             <el-button type="primary" @click="step = 0">上一步</el-button>
             <el-button type="success" @click="generateSaleAttrs">下一步：设置销售属性</el-button>
@@ -78,7 +77,7 @@
         </el-card>
       </el-col>
       <el-col :span="24" v-show="step == 2">
-        <el-card class="box-card" style="width:80%;margin:20px auto">
+        <!-- <el-card class="box-card" style="width:80%;margin:20px auto">
           <el-card class="box-card">
             <div slot="header" class="clearfix">
               <span>选择销售属性</span>
@@ -102,10 +101,10 @@
             <el-button type="primary" @click="step = 1">上一步</el-button>
             <el-button type="success" @click="generateSkus">下一步：设置SKU信息</el-button>
           </el-card>
-        </el-card>
+        </el-card> -->
       </el-col>
       <el-col :span="24" v-show="step == 3">
-        <el-card class="box-card" style="width:80%;margin:20px auto">
+        <!-- <el-card class="box-card" style="width:80%;margin:20px auto">
           <el-table :data="spu.skus" style="width: 100%">
             <el-table-column label="属性组合">
               <el-table-column :label="item.attrName" v-for="(item, index) in dataResp.tableAttrColumn"
@@ -170,9 +169,9 @@
                       </div>
                     </el-card>
                   </el-col>
-                </el-row>
-                <!-- 折扣，满减，会员价 -->
-                <el-form :model="scope.row">
+                </el-row> -->
+        <!-- 折扣，满减，会员价 -->
+        <!-- <el-form :model="scope.row">
                   <el-row>
                     <el-col :span="24">
                       <el-form-item label="设置折扣">
@@ -206,9 +205,9 @@
 
                     <el-col :span="24">
                       <el-form-item label="设置会员价" v-if="scope.row.memberPrice.length > 0">
-                        <br />
-                        <!--   @change="handlePriceChange(scope,mpidx,$event)" -->
-                        <el-form-item v-for="(mp, mpidx) in scope.row.memberPrice" :key="mp.id">
+                        <br /> -->
+        <!--   @change="handlePriceChange(scope,mpidx,$event)" -->
+        <!-- <el-form-item v-for="(mp, mpidx) in scope.row.memberPrice" :key="mp.id">
                           {{ mp.name }}
                           <el-input-number style="width:160px" v-model="scope.row.memberPrice[mpidx].price"
                             :precision="2" :min="0" controls-position="right"></el-input-number>
@@ -222,20 +221,222 @@
           </el-table>
           <el-button type="primary" @click="step = 2">上一步</el-button>
           <el-button type="success" @click="submitSkus">下一步：保存商品信息</el-button>
-        </el-card>
+        </el-card> -->
       </el-col>
       <el-col :span="24" v-show="step == 4">
-        <el-card class="box-card" style="width:80%;margin:20px auto">
+        <!-- <el-card class="box-card" style="width:80%;margin:20px auto">
           <h1>保存成功</h1>
           <el-button type="primary" @click="addAgian">继续添加</el-button>
-        </el-card>
+        </el-card> -->
       </el-col>
     </el-row>
   </div>
 </template>
 
-<script setup lang="js">
+<script setup lang="ts">
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import CategoryCascader from "../common/category-cascader.vue"
+import BrandSelect from "../common/brand-select.vue"
+import MultiUpload from "@/upload/multiUpload.vue"
+import PubSub from 'pubsub-js'
+import { ElMessage } from 'element-plus'
+import baseService from "@/service/baseService"
 
+const catPathSub = ref('')
+const brandIdSub = ref('')
+
+// 定义组件
+const CategoryCascaderComponent = ref(null);
+const BrandSelectComponent = ref(null);
+const MultiUploadComponent = ref(null);
+
+// 定义响应式数据
+const uploadDialogVisible = ref(false);
+const uploadImages = ref([]);
+const step = ref(0);
+
+const spu = reactive({
+  spuName: "",
+  spuDescription: "",
+  catalogId: 0,
+  brandId: 0,
+  weight: "",
+  publishStatus: 0,
+  decript: <any>[],
+  images: <any>[],
+  bounds: {
+    buyBounds: 0,
+    growBounds: 0
+  },
+  baseAttrs: [],
+  skus: []
+})
+const spuBaseForm = ref();
+
+const spuBaseInfoRules = reactive({
+  spuName: [
+    { required: true, message: "请输入商品名字", trigger: "blur" }
+  ],
+  spuDescription: [
+    { required: true, message: "请编写一个简单描述", trigger: "blur" }
+  ],
+  catalogId: [
+    { required: true, message: "请选择一个分类", trigger: "blur" }
+  ],
+  brandId: [
+    { required: true, message: "请选择一个品牌", trigger: "blur" }
+  ],
+  decript: [
+    { required: true, message: "请上传商品详情图集", trigger: "blur" }
+  ],
+  images: [
+    { required: true, message: "请上传商品图片集", trigger: "blur" }
+  ],
+  weight: [
+    {
+      type: "number",
+      required: true,
+      message: "请填写正确的重量值",
+      trigger: "blur"
+    }
+  ]
+})
+
+const dataResp = reactive({
+  attrGroups: [],
+  baseAttrs: [],
+  saleAttrs: [],
+  tempSaleAttrs: [],
+  tableAttrColumn: [],
+  memberLevels: [],
+  steped: [false, false, false, false, false]
+})
+
+const inputVisible = reactive([]);
+const inputValue = reactive([]);
+
+// 方法
+const addAgian = () => {
+  step.value = 0;
+  resetSpuData();
+};
+
+const resetSpuData = () => {
+  Object.assign(spu, {
+    spuName: "",
+    spuDescription: "",
+    catalogId: 0,
+    brandId: "",
+    weight: "",
+    publishStatus: 0,
+    decript: [],
+    images: [],
+    bounds: {
+      buyBounds: 0,
+      growBounds: 0
+    },
+    baseAttrs: [],
+    skus: []
+  })
+}
+
+const handlePriceChange = (scope: any, mpidx: any, e: any) => {
+
+}
+
+const getMemberLevels = () => {
+  baseService.get("/member/memberlevel/page").then((res) => {
+    dataResp.memberLevels = res.data.list;
+  }).catch(err => {
+    ElMessage.error("获取会员等级数据失败！")
+    console.log("getMemberLevels_error", err)
+  });
+}
+
+const showInput = (idx: any) => {
+
+}
+
+const checkDefaultImg = (row: any, index: any, img: any) => {
+
+}
+
+const handleInputConfirm = (idx: any) => {
+
+}
+
+const collectSpuBaseInfo = () => {
+
+  // console.log("验证表单", spuBaseForm.value)
+  spuBaseForm.value.validate((valid: boolean) => {
+    if (valid) {
+      // TODO: 表单提交
+      // console.log("spu_第一步", spu)
+      step.value = 1
+    } else {
+      ElMessage.warning("请填写这一步必要的信息")
+      // console.log("验证失败")
+    }
+  })
+}
+
+const generateSaleAttrs = () => {
+
+}
+
+const generateSkus = () => {
+
+}
+
+const hasAndReturnSku = (skus: any, descar: any) => {
+
+}
+
+const getShowSaleAttr = () => {
+
+}
+
+const showBaseAttrs = () => {
+
+}
+
+const submitSkus = () => {
+
+}
+
+const descartes = (list: Array<any>) => {
+
+}
+
+onBeforeUnmount(() => {
+  PubSub.unsubscribe(catPathSub.value)
+  PubSub.unsubscribe(brandIdSub.value)
+})
+
+// 生命周期钩子
+onMounted(() => {
+  const catPathSub = PubSub.subscribe("catPath", (msg, val) => {
+    spu.catalogId = val[val.length - 1];
+  });
+  const brandIdSub = PubSub.subscribe("brandId", (msg, val) => {
+    spu.brandId = val;
+  });
+  getMemberLevels();
+})
+
+const catelogChangeHandle = (catId: number) => {
+  spu.catalogId = catId
+}
+
+const brandChangeHandle = (brandId: number) => {
+  spu.brandId = brandId
+}
+
+const decriptChangeHandle = (imgList: string[]) => {
+  spu.decript = imgList
+}
+
+const imagesChangeHandle = (imgList: string[]) => {
+  spu.images = imgList
+}
 </script>
-
-<style></style>

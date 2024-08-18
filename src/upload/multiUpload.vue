@@ -3,7 +3,7 @@
         <el-upload class="avatar-uploader" action="http://gulimall-losgai.oss-cn-nanjing.aliyuncs.com" :data="dataObj"
             list-type="picture-card" :multiple="true" :show-file-list="true" :file-list="fileList"
             :before-upload="beforeUpload" :on-remove="handleRemove" :on-success="handleUploadSuccess"
-            :on-preview="handlePictureCardPreview">
+            :on-preview="handlePictureCardPreview" :limit="limit">
             <el-icon>
                 <Plus />
             </el-icon>
@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, UploadProps } from 'element-plus'
 import baseService from "@/service/baseService"
 import { getUuid } from '@/utils/utils'
 
@@ -24,7 +24,8 @@ const props = defineProps({
     logos: {
         type: Array,
         default: () => [],
-    }
+    },
+    limit: { type: Number, default: 5 }
 })
 
 const dialogImageUrl = ref('')
@@ -33,7 +34,7 @@ const dialogVisible = ref(false)
 
 const emit = defineEmits(['changeLogos'])
 
-const fileList = ref(props.logos.map((logo: string) => ({ name: logo, url: logo })))
+const fileList = ref(props.logos.map((logo: any) => ({ name: logo, url: logo })))
 
 const dataObj = ref({
     policy: '',
