@@ -38,12 +38,12 @@
               :active-value="1" :inactive-value="0" disabled />
             <el-tag v-show="scope.row.attrType == '0'" type="info">不支持</el-tag>
           </el-table-column>
-          <!-- <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
+          <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
             <template #default="scope">
-              <el-tag type="success" v-if="scope.row.valueType == 0">单选</el-tag>
-              <el-tag v-else>多选</el-tag>
+              <el-tag type="warning" v-if="scope.row.valueType == 0">单选</el-tag>
+              <el-tag type="success" v-else>多选</el-tag>
             </template>
-</el-table-column> -->
+          </el-table-column>
           <el-table-column prop="icon" header-align="center" align="center" label="图标" width="110" #default="scope">
             <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
           </el-table-column>
@@ -93,9 +93,9 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination :current-page="state.page" :page-sizes="[10, 20, 50, 100]" :page-size="state.limit"
-          :total="state.total" layout="total, sizes, prev, pager, next, jumper"
-          @size-change="state.pageSizeChangeHandle" @current-change="state.pageCurrentChangeHandle"> </el-pagination>
+        <el-pagination :current-page="page" :page-sizes="[10, 20, 50, 100]" :page-size="limit" :total="state.total"
+          layout="total, sizes, prev, pager, next, jumper" @size-change="pageSizeChangeHandle"
+          @current-change="pageCurrentChangeHandle"> </el-pagination>
         <!-- 弹窗, 新增 / 修改 -->
         <add-or-update ref="addOrUpdateRef" @refreshDataList="getInfo" :treeData="treeDataRef"
           :curCatId="curCatId">确定</add-or-update>
@@ -112,12 +112,16 @@ import Category from "../common/category.vue"
 import baseService from "@/service/baseService"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { ElTable } from 'element-plus'
+//TODO: 分页bug修正
 
 onMounted(() => {
   getData
 })
 
-let attrtype = ref(1)
+const page = ref(1)
+const limit = ref(10)
+
+const attrtype = ref(1)
 
 interface Tree {
   [x: string]: any
@@ -249,6 +253,13 @@ const reset = () => {
   ElMessage.info("重置页面数据")
 }
 
+const pageSizeChangeHandle = (value: number) => {
+  limit.value = value
+}
+
+const pageCurrentChangeHandle = (value: number) => {
+  page.value = value
+}
 </script>
 
 <style>

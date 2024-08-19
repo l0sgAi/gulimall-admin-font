@@ -6,6 +6,11 @@
       <el-form-item label="属性名" prop="attrName">
         <el-input v-model="dataForm.attrName" placeholder="属性名"></el-input>
       </el-form-item>
+      <el-form-item label="值类型" prop="valueType">
+        <el-switch v-model="dataForm.valueType" class="ml-2" inline-prompt
+          style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="多选" inactive-text="单选"
+          :active-value="1" :inactive-value="0" />
+      </el-form-item>
       <el-form-item v-if="dataForm.attrType != '0'" label="是否需要检索" prop="searchType">
         <el-switch v-model="dataForm.searchType" class="ml-2" inline-prompt
           style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949" active-text="需要检索" inactive-text="不需要检索"
@@ -68,6 +73,7 @@ import SingleUpload from "@/upload/singleUpload.vue"
 
 interface DataForm {
   attrId: any;
+  valueType: number;
   attrName: any;
   searchType: any;
   icon: any;
@@ -108,6 +114,7 @@ const catAttrgroupRef = ref([])
 const dataForm = reactive<DataForm>({
   attrId: '',
   attrName: '',
+  valueType: 0,
   searchType: 0,
   icon: '',
   valueSelect: '',

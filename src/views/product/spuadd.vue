@@ -52,24 +52,26 @@
       </el-col>
       <el-col :span="24" v-show="step == 1">
         <el-card class="box-card" style="width:80%;margin:20px auto">
-          <!-- <el-tabs tab-position="left" style="width:98%">
+          <el-tabs tab-position="left" style="width:98%">
             <el-tab-pane :label="group.attrGroupName" v-for="(group, gidx) in dataResp.attrGroups"
-              :key="group.attrGroupId"> -->
-          <!-- 遍历属性,每个tab-pane对应一个表单，每个属性是一个表单项  spu.baseAttrs[0] = [{attrId:xx,val:}]-->
-          <!-- <el-form ref="form" :model="spu">
-                <el-form-item :label="attr.attrName" v-for="(attr, aidx) in group.attrs" :key="attr.attrId">
+              :key="group.attrGroupId">
+              <!-- 遍历属性,每个tab-pane对应一个表单，每个属性是一个表单项  spu.baseAttrs[0] = [{attrId:xx,val:}]-->
+              <el-form ref="form" :model="spu">
+                <el-form-item :label="attr.attrName" v-for="(attr, aidx) in group.attrs" :key="attr.attrId"
+                  v-show="attr.attrType != 0" style="width: 800px;">
                   <el-input v-model="dataResp.baseAttrs[gidx][aidx].attrId" type="hidden" v-show="false"></el-input>
+                  <el-switch v-model="dataResp.baseAttrs[gidx][aidx].showDesc" class="ml-2" inline-prompt
+                    style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949;" active-text="快速展示"
+                    inactive-text="不快速展示" :active-value="1" :inactive-value="0" />
                   <el-select v-model="dataResp.baseAttrs[gidx][aidx].attrValues" :multiple="attr.valueType == 1"
                     filterable allow-create default-first-option placeholder="请选择或输入值">
                     <el-option v-for="(val, vidx) in attr.valueSelect.split(';')" :key="vidx" :label="val"
                       :value="val"></el-option>
                   </el-select>
-                  <el-checkbox v-model="dataResp.baseAttrs[gidx][aidx].showDesc" :true-label="1"
-                    :false-label="0">快速展示</el-checkbox>
                 </el-form-item>
               </el-form>
             </el-tab-pane>
-          </el-tabs> -->
+          </el-tabs>
           <div style="margin:auto">
             <el-button type="primary" @click="step = 0">上一步</el-button>
             <el-button type="success" @click="generateSaleAttrs">下一步：设置销售属性</el-button>
@@ -278,7 +280,7 @@ const spuBaseInfoRules = reactive({
     { required: true, message: "请输入商品名字", trigger: "blur" }
   ],
   spuDescription: [
-    { required: true, message: "请编写一个简单描述", trigger: "blur" }
+    { required: false, message: "请编写一个简单描述", trigger: "blur" }
   ],
   catalogId: [
     { required: true, message: "请选择一个分类", trigger: "blur" }
@@ -287,10 +289,10 @@ const spuBaseInfoRules = reactive({
     { required: true, message: "请选择一个品牌", trigger: "blur" }
   ],
   decript: [
-    { required: true, message: "请上传商品详情图集", trigger: "blur" }
+    { required: false, message: "请上传商品详情图集", trigger: "blur" }
   ],
   images: [
-    { required: true, message: "请上传商品图片集", trigger: "blur" }
+    { required: false, message: "请上传商品图片集", trigger: "blur" }
   ],
   weight: [
     {
@@ -303,9 +305,9 @@ const spuBaseInfoRules = reactive({
 })
 
 const dataResp = reactive({
-  attrGroups: [],
-  baseAttrs: [],
-  saleAttrs: [],
+  attrGroups: <any>[],
+  baseAttrs: <any>[],
+  saleAttrs: <any>[],
   tempSaleAttrs: [],
   tableAttrColumn: [],
   memberLevels: [],
@@ -350,7 +352,7 @@ const getMemberLevels = () => {
   }).catch(err => {
     ElMessage.error("获取会员等级数据失败！")
     console.log("getMemberLevels_error", err)
-  });
+  })
 }
 
 const showInput = (idx: any) => {
@@ -366,13 +368,11 @@ const handleInputConfirm = (idx: any) => {
 }
 
 const collectSpuBaseInfo = () => {
-
   // console.log("验证表单", spuBaseForm.value)
   spuBaseForm.value.validate((valid: boolean) => {
     if (valid) {
-      // TODO: 表单提交
-      // console.log("spu_第一步", spu)
-      step.value = 1
+      console.log("spu_第一步", spu)
+      showBaseAttrs()
     } else {
       ElMessage.warning("请填写这一步必要的信息")
       // console.log("验证失败")
@@ -397,7 +397,32 @@ const getShowSaleAttr = () => {
 }
 
 const showBaseAttrs = () => {
+  baseService.get(`/product/attrgroup/withattr/${spu.catalogId}`).then((res) => {
+    //先对表单的baseAttrs进行初始化
+    // console.log("res.data", res.data)
+    res.data.forEach((item: { attrs: any[] }) => {
+      let attrArray = <any>[]
+      if (item && item.attrs) {
+        item.attrs.forEach((attr: { attrId: any; showDesc: any; attrType: number }) => {
+          attrArray.push({
+            attrId: attr.attrId,
+            attrValues: "",
+            showDesc: attr.showDesc
+          })
+        })
+      }
+      // console.log("attrArray", attrArray)
+      dataResp.baseAttrs.push(attrArray)
+    })
+    console.log("dataResp", dataResp)
+    dataResp.steped[0] = true
+    dataResp.attrGroups = res.data
+  }).catch(err => {
+    ElMessage.error("获取规格数据失败！")
+    console.log("getMemberLevels_error", err)
+  })
 
+  step.value = 1
 }
 
 const submitSkus = () => {

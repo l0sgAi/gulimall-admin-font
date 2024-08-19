@@ -40,12 +40,12 @@
                                 active-text="是" inactive-text="否" :active-value="1" :inactive-value="0" disabled />
                         </template>
                     </el-table-column>
-                    <!-- <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
-              <template #default="scope">
-                <el-tag type="success" v-if="scope.row.valueType == 0">单选</el-tag>
-                <el-tag v-else>多选</el-tag>
-              </template>
-            </el-table-column> -->
+                    <el-table-column prop="valueType" header-align="center" align="center" label="值类型">
+                        <template #default="scope">
+                            <el-tag type="warning" v-if="scope.row.valueType == 0">单选</el-tag>
+                            <el-tag type="success" v-else>多选</el-tag>
+                        </template>
+                    </el-table-column>
                     <el-table-column prop="icon" header-align="center" align="center" label="图标" width="110"
                         #default="scope">
                         <img v-if="scope.row.icon" :src="scope.row.icon" class="icon" />
