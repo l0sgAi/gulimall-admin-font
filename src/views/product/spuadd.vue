@@ -58,7 +58,7 @@
               <!-- 遍历属性,每个tab-pane对应一个表单，每个属性是一个表单项  spu.baseAttrs[0] = [{attrId:xx,val:}]-->
               <el-form ref="form" :model="spu">
                 <el-form-item :label="attr.attrName" v-for="(attr, aidx) in group.attrs" :key="attr.attrId"
-                  v-show="attr.attrType != 0" style="width: 800px;">
+                  v-show="attr.attrType == 1" style="width: 800px;">
                   <el-input v-model="dataResp.baseAttrs[gidx][aidx].attrId" type="hidden" v-show="false"></el-input>
                   <el-switch v-model="dataResp.baseAttrs[gidx][aidx].showDesc" class="ml-2" inline-prompt
                     style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949;" active-text="快速展示"
@@ -79,10 +79,11 @@
         </el-card>
       </el-col>
       <el-col :span="24" v-show="step == 2">
-        <!-- <el-card class="box-card" style="width:80%;margin:20px auto">
+        <el-card class="box-card" style="width:80%;margin:20px auto">
           <el-card class="box-card">
             <div slot="header" class="clearfix">
               <span>选择销售属性</span>
+              <br />
               <el-form ref="saleform" :model="spu">
                 <el-form-item :label="attr.attrName" v-for="(attr, aidx) in dataResp.saleAttrs" :key="attr.attrId">
                   <el-input v-model="dataResp.tempSaleAttrs[aidx].attrId" type="hidden" v-show="false"></el-input>
@@ -103,41 +104,41 @@
             <el-button type="primary" @click="step = 1">上一步</el-button>
             <el-button type="success" @click="generateSkus">下一步：设置SKU信息</el-button>
           </el-card>
-        </el-card> -->
+        </el-card>
       </el-col>
       <el-col :span="24" v-show="step == 3">
-        <!-- <el-card class="box-card" style="width:80%;margin:20px auto">
+        <el-card class="box-card" style="width:80%;margin:20px auto">
           <el-table :data="spu.skus" style="width: 100%">
             <el-table-column label="属性组合">
               <el-table-column :label="item.attrName" v-for="(item, index) in dataResp.tableAttrColumn"
                 :key="item.attrId">
-                <template slot-scope="scope">
+                <template #default="scope">
                   <span style="margin-left: 10px">{{ scope.row.attr[index].attrValue }}</span>
                 </template>
               </el-table-column>
             </el-table-column>
             <el-table-column label="商品名称" prop="skuName">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-input v-model="scope.row.skuName"></el-input>
               </template>
             </el-table-column>
             <el-table-column label="标题" prop="skuTitle">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-input v-model="scope.row.skuTitle"></el-input>
               </template>
             </el-table-column>
             <el-table-column label="副标题" prop="skuSubtitle">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-input v-model="scope.row.skuSubtitle"></el-input>
               </template>
             </el-table-column>
             <el-table-column label="价格" prop="price">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-input v-model="scope.row.price"></el-input>
               </template>
             </el-table-column>
             <el-table-column type="expand">
-              <template slot-scope="scope">
+              <template #default="scope">
                 <el-row>
                   <el-col :span="24">
                     <label style="display:block;float:left">选择图集 或</label>
@@ -148,6 +149,28 @@
                     <el-divider></el-divider>
                   </el-col>
                   <el-col :span="24">
+                    <el-card style="width:170px;float:left;margin-left:15px;margin-top:15px;"
+                      :body-style="{ padding: '0px' }" v-for="(img, index) in spu.decript" :key="index">
+                      <img :src="img" style="width:160px;height:120px" />
+                      <div style="padding: 14px;">
+                        <el-row>
+                          <el-col :span="12">
+                            <el-checkbox v-model="scope.row.images[index].imgUrl" :true-label="img"
+                              false-label></el-checkbox>
+                          </el-col>
+                          <el-col :span="12">
+                            <el-tag v-if="scope.row.images[index].defaultImg == 1">
+                              <input type="radio" checked :name="scope.row.skuName"
+                                @change="checkDefaultImg(scope.row, index, img)" />设为默认
+                            </el-tag>
+                            <el-tag v-else>
+                              <input type="radio" :name="scope.row.skuName"
+                                @change="checkDefaultImg(scope.row, index, img)" />设为默认
+                            </el-tag>
+                          </el-col>
+                        </el-row>
+                      </div>
+                    </el-card>
                     <el-card style="width:170px;float:left;margin-left:15px;margin-top:15px;"
                       :body-style="{ padding: '0px' }" v-for="(img, index) in spu.images" :key="index">
                       <img :src="img" style="width:160px;height:120px" />
@@ -171,9 +194,10 @@
                       </div>
                     </el-card>
                   </el-col>
-                </el-row> -->
-        <!-- 折扣，满减，会员价 -->
-        <!-- <el-form :model="scope.row">
+                </el-row>
+
+                <!-- 折扣，满减，会员价 -->
+                <el-form :model="scope.row">
                   <el-row>
                     <el-col :span="24">
                       <el-form-item label="设置折扣">
@@ -181,12 +205,11 @@
                         <el-input-number style="width:160px" :min="0" controls-position="right"
                           v-model="scope.row.fullCount"></el-input-number>
                         <label>件</label>
-
                         <label style="margin-left:15px;">打</label>
                         <el-input-number style="width:160px" v-model="scope.row.discount" :precision="2" :max="1"
                           :min="0" :step="0.01" controls-position="right"></el-input-number>
                         <label>折</label>
-                        <el-checkbox v-model="scope.row.countStatus" :true-label="1"
+                        <el-checkbox style="margin-left: 25px;" v-model="scope.row.countStatus" :true-label="1"
                           :false-label="0">可叠加优惠</el-checkbox>
                       </el-form-item>
                     </el-col>
@@ -200,16 +223,15 @@
                         <el-input-number style="width:160px" v-model="scope.row.reducePrice" :step="10" :min="0"
                           controls-position="right"></el-input-number>
                         <label>元</label>
-                        <el-checkbox v-model="scope.row.priceStatus" :true-label="1"
+                        <el-checkbox style="margin-left: 25px;" v-model="scope.row.priceStatus" :true-label="1"
                           :false-label="0">可叠加优惠</el-checkbox>
                       </el-form-item>
                     </el-col>
-
                     <el-col :span="24">
                       <el-form-item label="设置会员价" v-if="scope.row.memberPrice.length > 0">
-                        <br /> -->
-        <!--   @change="handlePriceChange(scope,mpidx,$event)" -->
-        <!-- <el-form-item v-for="(mp, mpidx) in scope.row.memberPrice" :key="mp.id">
+                        <br />
+                        <!--   @change="handlePriceChange(scope,mpidx,$event)" -->
+                        <el-form-item v-for="(mp, mpidx) in scope.row.memberPrice" :key="mp.id">
                           {{ mp.name }}
                           <el-input-number style="width:160px" v-model="scope.row.memberPrice[mpidx].price"
                             :precision="2" :min="0" controls-position="right"></el-input-number>
@@ -223,13 +245,13 @@
           </el-table>
           <el-button type="primary" @click="step = 2">上一步</el-button>
           <el-button type="success" @click="submitSkus">下一步：保存商品信息</el-button>
-        </el-card> -->
+        </el-card>
       </el-col>
       <el-col :span="24" v-show="step == 4">
-        <!-- <el-card class="box-card" style="width:80%;margin:20px auto">
+        <el-card class="box-card" style="width:80%;margin:20px auto">
           <h1>保存成功</h1>
           <el-button type="primary" @click="addAgian">继续添加</el-button>
-        </el-card> -->
+        </el-card>
       </el-col>
     </el-row>
   </div>
@@ -241,7 +263,7 @@ import CategoryCascader from "../common/category-cascader.vue"
 import BrandSelect from "../common/brand-select.vue"
 import MultiUpload from "@/upload/multiUpload.vue"
 import PubSub from 'pubsub-js'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import baseService from "@/service/baseService"
 
 const catPathSub = ref('')
@@ -270,8 +292,8 @@ const spu = reactive({
     buyBounds: 0,
     growBounds: 0
   },
-  baseAttrs: [],
-  skus: []
+  baseAttrs: <any>[],
+  skus: <any>[]
 })
 const spuBaseForm = ref();
 
@@ -308,14 +330,14 @@ const dataResp = reactive({
   attrGroups: <any>[],
   baseAttrs: <any>[],
   saleAttrs: <any>[],
-  tempSaleAttrs: [],
-  tableAttrColumn: [],
-  memberLevels: [],
+  tempSaleAttrs: <any>[],
+  tableAttrColumn: <any>[],
+  memberLevels: <any>[],
   steped: [false, false, false, false, false]
 })
 
-const inputVisible = reactive([]);
-const inputValue = reactive([]);
+const inputVisible = reactive<any[]>([])
+const inputValue = reactive<any[]>([])
 
 // 方法
 const addAgian = () => {
@@ -342,7 +364,7 @@ const resetSpuData = () => {
   })
 }
 
-const handlePriceChange = (scope: any, mpidx: any, e: any) => {
+const handlePriceChange = (_scope: any, _mpidx: any, _e: any) => {
 
 }
 
@@ -356,15 +378,34 @@ const getMemberLevels = () => {
 }
 
 const showInput = (idx: any) => {
-
+  inputVisible[idx].view = true
 }
 
 const checkDefaultImg = (row: any, index: any, img: any) => {
-
+  console.log("默认图片", row, index)
+  //这个图片被选中了，
+  row.images[index].imgUrl = img //默认选中
+  row.images[index].defaultImg = 1 //修改标志位;
+  //修改其他人的标志位
+  row.images.forEach((_item: any, idx: string | number) => {
+    if (idx != index) {
+      row.images[idx].defaultImg = 0
+    }
+  });
 }
 
 const handleInputConfirm = (idx: any) => {
-
+  let inputVal = inputValue[idx].val
+  if (inputVal) {
+    // this.dynamicTags.push(inputValue);
+    if (dataResp.saleAttrs[idx].valueSelect == "") {
+      dataResp.saleAttrs[idx].valueSelect = inputVal
+    } else {
+      dataResp.saleAttrs[idx].valueSelect += ";" + inputVal
+    }
+  }
+  inputVisible[idx].view = false
+  inputValue[idx].val = ""
 }
 
 const collectSpuBaseInfo = () => {
@@ -381,19 +422,138 @@ const collectSpuBaseInfo = () => {
 }
 
 const generateSaleAttrs = () => {
+  //把页面绑定的所有attr处理到spu里面,这一步都要做
+  spu.baseAttrs = []
+  dataResp.baseAttrs.forEach((itemGroup: any[]) => {
+    itemGroup.forEach((attr: any) => {
+      const { attrId, attrValues, showDesc } = attr
+      // 跳过没有录入值的属性
+      if (attrValues != "") {
+        let values = attrValues
+        if (Array.isArray(attrValues)) {
+          // 多个值用;隔开
+          values = attrValues.join(";")
+        }
+        spu.baseAttrs.push({ attrId, values, showDesc })
+      }
+    })
+  })
 
+  console.log("baseAttrs", spu.baseAttrs)
+  step.value = 2
+  getShowSaleAttr()
 }
 
 const generateSkus = () => {
+  step.value = 3
+  let selectValues = <any>[]
+  dataResp.tableAttrColumn = <any>[]
 
+  dataResp.tempSaleAttrs.forEach((item: { attrValues: any[] }) => {
+    if (item.attrValues.length > 0) {
+      selectValues.push(item.attrValues)
+      dataResp.tableAttrColumn.push(item)
+    }
+  })
+
+  let descarteArray = descartes(selectValues)
+  console.log("生成的组合", JSON.stringify(descarteArray))
+  //有多少descartes就有多少sku
+  let skus = <any>[]
+
+  descarteArray.forEach((descar, _descaridx) => {
+    let attrArray = <any>[] //sku属性组
+    descar.forEach((de: any, index: any) => {
+      //构造saleAttr信息
+      let saleAttrItem = {
+        attrId: dataResp.tableAttrColumn[index].attrId,
+        attrName: dataResp.tableAttrColumn[index].attrName,
+        attrValue: de
+      }
+      attrArray.push(saleAttrItem);
+    })
+    console.log("attrArray", attrArray)
+
+    //先初始化几个images，后面的上传还要加
+    let imgs = <any>[]
+    spu.images.forEach((_img: any, _idx: any) => {
+      imgs.push({ imgUrl: "", defaultImg: 0 })
+    })
+    console.log("imgs", imgs)
+
+    //会员价，也必须在循环里面生成，否则会导致数据绑定问题
+    let memberPrices = <any>[]
+    if (dataResp.memberLevels.length > 0) {
+      for (let i = 0; i < dataResp.memberLevels.length; i++) {
+        if (dataResp.memberLevels[i].priviledgeMemberPrice == 1) {
+          memberPrices.push({
+            id: dataResp.memberLevels[i].id,
+            name: dataResp.memberLevels[i].name,
+            price: 0
+          })
+        }
+      }
+    }
+    //;descaridx，判断如果之前有就用之前的值;
+    let res = hasAndReturnSku(spu.skus, descar)
+    if (res === null) {
+      skus.push({
+        attr: attrArray,
+        skuName: spu.spuName + " " + descar.join(" "),
+        price: 0,
+        skuTitle: spu.spuName + " " + descar.join(" "),
+        skuSubtitle: "",
+        images: imgs,
+        descar: descar,
+        fullCount: 0,
+        discount: 0,
+        countStatus: 0,
+        fullPrice: 0.0,
+        reducePrice: 0.0,
+        priceStatus: 0,
+        memberPrice: new Array().concat(memberPrices)
+      });
+    } else {
+      skus.push(res)
+    }
+  });
+  spu.skus = skus
+  console.log("结果!!!", spu.skus)
 }
 
-const hasAndReturnSku = (skus: any, descar: any) => {
-
+const hasAndReturnSku = (skus: any[], descar: any[]): any => {
+  let res: any = null;
+  if (skus.length > 0) {
+    for (let i = 0; i < skus.length; i++) {
+      if (skus[i].descar.join(" ") === descar.join(" ")) {
+        res = skus[i];
+        break // 找到匹配的sku后可以立即退出循环
+      }
+    }
+  }
+  return res
 }
 
 const getShowSaleAttr = () => {
-
+  //获取当前分类可以使用的销售属性
+  if (!dataResp.steped[1]) {
+    baseService.get(`product/attr/sale/page/${spu.catalogId}`).then((res) => {
+      dataResp.saleAttrs = res.data.list
+      res.data.list.forEach((item: { attrId: any; attrName: any }) => {
+        dataResp.tempSaleAttrs.push({
+          attrId: item.attrId,
+          attrValues: [],
+          attrName: item.attrName
+        });
+        inputVisible.push({ view: false })
+        inputValue.push({ val: "" })
+      });
+      dataResp.steped[1] = true
+    }).catch(err => {
+      ElMessage.error("获取销售属性数据失败！")
+      console.log("getShowSaleAttr_error", err)
+    })
+  }
 }
 
 const showBaseAttrs = () => {
@@ -426,11 +586,71 @@ const showBaseAttrs = () => {
 }
 
 const submitSkus = () => {
-
+  console.log("~~~~~", JSON.stringify(spu))
+  ElMessageBox.confirm(`将要提交商品数据，需要一小段时间，是否继续?`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    baseService.post("/product/spuinfo/save", spu).then(() => {
+      ElMessage.success("保存SPU成功！")
+    }).catch(() => {
+      ElMessage.error("保存SPU失败！")
+    })
+  }).catch(() => {
+    ElMessage.info('已取消')
+  })
 }
 
-const descartes = (list: Array<any>) => {
+const descartes = (list: any[]) => {
+  const point = ref<{ [key: string]: { parent: string | null, count: number } }>({})
+  const result = ref<any[]>([])
+  let pIndex: string | null = null
+  let tempCount = 0
+  const temp = ref<any[]>([])
 
+  // 根据参数列生成指针对象
+  list.forEach((_, index) => {
+    if (typeof list[index] === "object") {
+      point.value[index] = { parent: pIndex, count: 0 }
+      pIndex = index.toString()
+    }
+  })
+
+  // 单维度数据结构直接返回
+  if (pIndex === null) {
+    return list
+  }
+
+  // 动态生成笛卡尔积
+  while (true) {
+    Object.keys(point.value).forEach(index => {
+      tempCount = point.value[index]["count"]
+      temp.value.push(list[parseInt(index)][tempCount])
+    });
+
+    // 压入结果数组
+    result.value.push([...temp.value])
+    temp.value = []
+
+    // 检查指针最大值问题
+    let currentIndex = Object.keys(point.value).pop()
+    while (true) {
+      if (point.value[currentIndex!]["count"] + 1 >= list[parseInt(currentIndex!)].length) {
+        point.value[currentIndex!]["count"] = 0
+        pIndex = point.value[currentIndex!]["parent"]
+        if (pIndex === null) {
+          return result.value
+        }
+
+        // 赋值parent进行再次检查
+        currentIndex = pIndex
+      } else {
+        point.value[currentIndex!]["count"]++
+        break
+      }
+    }
+  }
 }
 
 onBeforeUnmount(() => {
@@ -440,10 +660,10 @@ onBeforeUnmount(() => {
 
 // 生命周期钩子
 onMounted(() => {
-  const catPathSub = PubSub.subscribe("catPath", (msg, val) => {
+  const catPathSub = PubSub.subscribe("catPath", (_msg, val) => {
     spu.catalogId = val[val.length - 1];
   });
-  const brandIdSub = PubSub.subscribe("brandId", (msg, val) => {
+  const brandIdSub = PubSub.subscribe("brandId", (_msg, val) => {
     spu.brandId = val;
   });
   getMemberLevels();
