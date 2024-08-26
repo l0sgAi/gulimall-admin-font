@@ -108,7 +108,8 @@
       </el-col>
       <el-col :span="24" v-show="step == 3">
         <el-card class="box-card" style="width:80%;margin:20px auto">
-          <el-table :data="spu.skus" style="width: 100%">
+          <el-table :data="spu.skus" style="width: 100%" :row-key="getRowKeys" :expand-row-keys="expands"
+            @expand-change="expandColumn">
             <el-table-column label="属性组合">
               <el-table-column :label="item.attrName" v-for="(item, index) in dataResp.tableAttrColumn"
                 :key="item.attrId">
@@ -265,6 +266,7 @@ import MultiUpload from "@/upload/multiUpload.vue"
 import PubSub from 'pubsub-js'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import baseService from "@/service/baseService"
+const expands = ref<any[]>([])
 
 const catPathSub = ref('')
 const brandIdSub = ref('')
@@ -683,5 +685,18 @@ const decriptChangeHandle = (imgList: string[]) => {
 
 const imagesChangeHandle = (imgList: string[]) => {
   spu.images = imgList
+}
+
+const getRowKeys = (row: any) => {
+  return row.skuName
+}
+
+const expandColumn = (row: any, expandRows: any[]) => {
+  if (!expands.value.includes(row.skuName)) {
+    expands.value.push(row.skuName)
+  } else {
+    expands.value = expands.value.filter(item => item !== row.skuName)
+  }
+  expands.value.filter((item, index) => expands.value.indexOf(item) === index)
 }
 </script>

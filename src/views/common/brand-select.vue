@@ -24,7 +24,7 @@ const emit = defineEmits(['changeBrand'])
 const brands = ref<IBrand[]>([{ brandId: 0, name: '暂无数据', logo: '' }])
 const catId = ref(0)
 
-const brandId = ref<number>(0);
+const brandId = ref<number>(0)
 let subscribe: string | null = null
 
 const getCatBrands = () => {
@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
   }
 })
 
-watch(() => catId.value, (newValue) => {
+watch(() => brandId.value, (newValue) => {
   emitInput(newValue)
 })
 </script>

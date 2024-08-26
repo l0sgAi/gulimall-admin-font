@@ -105,9 +105,9 @@
 </template>
 
 <script lang="ts" setup>
-import useView from "@/hooks/useView";
-import { reactive, ref, toRefs, onMounted, watch } from "vue";
-import AddOrUpdate from "./baseattr-add-or-update.vue";
+import useView from "@/hooks/useView"
+import { reactive, ref, toRefs, onMounted, watch } from "vue"
+import AddOrUpdate from "./baseattr-add-or-update.vue"
 import Category from "../common/category.vue"
 import baseService from "@/service/baseService"
 import { ElMessage, ElMessageBox } from "element-plus"
@@ -214,6 +214,7 @@ const getInfo = () => {
     // ElMessage.success("获取数据成功!")
     state.dataList = res.data.list
     state.total = res.data.total
+    console.log("***state:res", state, res)
   }).catch(err => {
     ElMessage.error("获取数据失败!")
   })
@@ -255,10 +256,12 @@ const reset = () => {
 
 const pageSizeChangeHandle = (value: number) => {
   limit.value = value
+  console.log("limitVal", limit.value)
 }
 
 const pageCurrentChangeHandle = (value: number) => {
   page.value = value
+  console.log("pageVal", page.value)
 }
 </script>
 
