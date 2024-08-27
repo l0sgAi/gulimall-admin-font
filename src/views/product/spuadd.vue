@@ -596,6 +596,7 @@ const submitSkus = () => {
   }).then(() => {
     baseService.post("/product/spuinfo/save", spu).then(() => {
       ElMessage.success("保存SPU成功！")
+      step.value = 4
     }).catch(() => {
       ElMessage.error("保存SPU失败！")
     })
