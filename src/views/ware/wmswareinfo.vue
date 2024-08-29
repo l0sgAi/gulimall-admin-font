@@ -69,7 +69,7 @@ const query = () => {
     // console.log("成功获取wmswareinfo data: ", res.data)
     state.dataList = res.data.list
     state.total = res.data.total
-    ElMessage.success(`查询成功！共有${state.dataList.length}条数据。`)
+    ElMessage.success(`查询成功`)
     // console.log("成功获取state.dataList: ", state.dataList)
   }).catch(() => {
     ElMessage.error("获取数据失败！")
