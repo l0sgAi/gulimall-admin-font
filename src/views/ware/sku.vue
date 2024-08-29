@@ -73,7 +73,7 @@ const view = reactive({
 });
 const wareId = ref('')
 const skuId = ref('')
-const wareList = ref<any>([])
+const wareList = ref<any[]>([])
 
 const state = reactive({ ...useView(view), ...toRefs(view) })
 
