@@ -76,7 +76,8 @@
       layout="total, sizes, prev, pager, next, jumper"></el-pagination>
     <!-- 弹窗, 新增 / 修改 -->
     <add-or-update ref="addOrUpdateRef" @refreshDataList="getDataList"></add-or-update>
-    <el-dialog title="合并到整单" :visible="mergedialogVisible">
+
+    <el-dialog title="合并到整单" v-model="mergedialogVisible">
       <!-- id  assignee_id  assignee_name  phone   priority status -->
       <el-select v-model="purchaseId" placeholder="请选择" clearable filterable>
         <el-option v-for="item in purchasetableData" :key="item.id" :label="item.id" :value="item.id">
@@ -86,7 +87,7 @@
       </el-select>
       <span slot="footer" class="dialog-footer">
         <el-button @click="mergedialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="mergeItem">确 定</el-button>
+        <el-button type="primary" @click="mergeItem()">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -105,37 +106,74 @@ const dataForm = reactive<any>({
 })
 
 const table = ref<InstanceType<typeof ElTable>>()
-const wareList = ref<any>([]);
-const dataList = ref([]);
-const pageIndex = ref(1);
-const pageSize = ref(10);
-const totalPage = ref(0);
-const dataListLoading = ref(false);
-const dataListSelections = ref<any>([]);
-const addOrUpdateVisible = ref(false);
-const mergedialogVisible = ref(false);
-const purchaseId = ref("");
-const purchasetableData = ref<any>([]);
+const wareList = ref<any>([])
+const dataList = ref([])
+const pageIndex = ref(1)
+const pageSize = ref(10)
+const totalPage = ref(0)
+const dataListLoading = ref(false)
+const dataListSelections = ref<any>([])
+// const addOrUpdateVisible = ref(false);
+const mergedialogVisible = ref(false)
+const purchaseId = ref('')
+const purchasetableData = ref<any>([])
 const addOrUpdateRef = ref()
 
+const doMerge = (itemsIds: number[]) => {
+  //整单合并
+  baseService.post("ware/wmspurchase/merge", {
+    items: itemsIds,
+    purchaseId: purchaseId.value
+  }).then(() => {
+    getDataList()
+    ElMessage.success(`合并成功`)
+  }).catch((err) => {
+    ElMessage.error('合并失败')
+    console.log("mergeItem__err", err)
+  })
+}
+
 const mergeItem = () => {
-  let items = dataListSelections.value.map((item: { id: any; }) => item.id);
+  let itemsIds = dataListSelections.value.map((item: { id: number; }) => item.id)
+
   if (!purchaseId.value) {
-    //TODO: 整单合并
+    ElMessageBox.confirm(`未选中任何【采购单】，将创建新单，确认创建？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }).then(() => {
+      doMerge(itemsIds)
+      mergedialogVisible.value = false
+    })
+  } else {
+    doMerge(itemsIds)
+    mergedialogVisible.value = false
   }
-  mergedialogVisible.value = false;
+
 }
 
 const getUnreceivedPurchase = () => {
-  //TODO: 获取未分配的采购单
+  baseService.get("ware/wmspurchase/pageNoAssign").then((res: { data: { list: any; }; }) => {
+    purchasetableData.value = res.data.list
+  }).catch((err) => {
+    ElMessage.error('获取数据失败')
+    console.log("getUnreceivedPurchase__err", err)
+  })
 }
 
 const handleBatchCommand = (cmd: string) => {
   if (cmd === 'delete') {
     deleteHandle()
-  } else if (cmd === 'merge') {
-    mergedialogVisible.value = true;
-    mergeItem()
+  }
+  else if (cmd === 'merge') {
+    dataListSelections.value = table.value!.getSelectionRows()
+    if (dataListSelections.value.length === 0) {
+      ElMessage.warning("请选择要合并的采购需求")
+      return false
+    }
+    purchaseId.value = ''
+    mergedialogVisible.value = true
+    getUnreceivedPurchase()
   }
 }
 
@@ -150,7 +188,7 @@ const getWares = () => {
 
 const getDataList = () => {
   dataListLoading.value = true
-  console.log("dataForm: ", dataForm)
+  // console.log("dataForm: ", dataForm)
   baseService.get("ware/wmspurchasedetail/page", dataForm).then((res: { data: { list: any; total: number; }; }) => {
     dataList.value = res.data.list
     totalPage.value = res.data.total
